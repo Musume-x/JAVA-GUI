@@ -1,245 +1,109 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package gui;
+package admin;
 
+import dao.UserDAO;
 import main.login;
 import model.User;
-import dao.UserDAO;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 
-/**
- *
- * @author miwa
- */
-public class userForm extends javax.swing.JPanel {
+public class adminForm extends javax.swing.JPanel {
 
     private UserDAO userDAO;
     private User currentUser;
 
-    /**
-     * Creates new form userForm
-     */
-    public userForm() {
+    public adminForm() {
         initComponents();
         userDAO = new UserDAO();
-        addEventHandlers();
-        loadUserData();
+        loadUser();
+        wireEvents();
     }
 
-    private void loadUserData() {
+    private void loadUser() {
         currentUser = login.getCurrentUser();
         if (currentUser != null) {
-            // Refresh user data from database
-            User refreshedUser = userDAO.getUserById(currentUser.getId());
-            if (refreshedUser != null) {
-                currentUser = refreshedUser;
-            }
-
-            // Populate form fields
-            updateName.setText(currentUser.getName());
+            updateName.setText(currentUser.getFirstName() != null ? currentUser.getFirstName() : "");
             updateLastName.setText(currentUser.getLastName() != null ? currentUser.getLastName() : "");
             updateContact.setText(currentUser.getContact() != null ? currentUser.getContact() : "");
-            updateEmail.setText(currentUser.getEmail() != null ? currentUser.getEmail() : "");
             updateStatus.setText(currentUser.getStatus() != null ? currentUser.getStatus() : "");
             updateAccountID.setText(currentUser.getAccountID() != null ? currentUser.getAccountID() : "");
-            updateSchoolLevel.setText(currentUser.getSchoolLevel() != null ? currentUser.getSchoolLevel() : "");
             updateAddress.setText(currentUser.getAddress() != null ? currentUser.getAddress() : "");
             updateBirthdate.setText(currentUser.getBirthdate() != null ? currentUser.getBirthdate() : "");
-
-            // Set gender radio buttons
-            String gender = currentUser.getGender();
-            if (gender != null) {
-                if (gender.equalsIgnoreCase("Male")) {
-                    updateGenderOptionMale.setSelected(true);
-                    updateGenderOptionFemale.setSelected(false);
-                } else if (gender.equalsIgnoreCase("Female")) {
-                    updateGenderOptionMale.setSelected(false);
-                    updateGenderOptionFemale.setSelected(true);
-                }
-            }
-
-            // Update welcome message
-            jLabel3.setText("Welcome, " + currentUser.getFullName() + "!");
-            getFullName.setText(currentUser.getFullName());
-        } else {
-            JOptionPane.showMessageDialog(this, "No user logged in!", "Error", JOptionPane.ERROR_MESSAGE);
+            getFullName.setText(currentUser.getFirstName() + " " + (currentUser.getLastName() != null ? currentUser.getLastName() : ""));
+            String g = currentUser.getGender() != null ? currentUser.getGender() : "";
+            updateGenderOptionMale.setSelected("Male".equalsIgnoreCase(g));
+            updateGenderOptionFemale.setSelected("Female".equalsIgnoreCase(g));
         }
     }
 
-    private void addEventHandlers() {
-        // Dashboard click - go to landingPage
-        dashboard.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                openLandingPage();
-            }
+    private void wireEvents() {
+        updateGenderOptionMale.addActionListener(e -> {
+            if (updateGenderOptionMale.isSelected()) updateGenderOptionFemale.setSelected(false);
         });
-
-        // Logout click
-        logout.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                performLogout();
-            }
+        updateGenderOptionFemale.addActionListener(e -> {
+            if (updateGenderOptionFemale.isSelected()) updateGenderOptionMale.setSelected(false);
         });
-
-        // Profile click - go to userProfile
-        profile.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                openUserProfile();
-            }
-        });
-
-        // Update Profile click
         updateProfile.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                updateProfile();
+                doUpdate();
             }
         });
-
-        // Gender checkbox mutual exclusion
-        updateGenderOptionMale.addActionListener(new java.awt.event.ActionListener() {
+        jLabel6.addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                if (updateGenderOptionMale.isSelected()) {
-                    updateGenderOptionFemale.setSelected(false);
+            public void mouseClicked(MouseEvent e) {
+                doUpdate();
+            }
+        });
+        profile.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openProfile();
+            }
+        });
+        logout1.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                login.setCurrentUser(null);
+                login log = new login();
+                log.setVisible(true);
+                JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(adminForm.this);
+                if (currentFrame != null) {
+                    currentFrame.dispose();
                 }
             }
         });
-
-        updateGenderOptionFemale.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                if (updateGenderOptionFemale.isSelected()) {
-                    updateGenderOptionMale.setSelected(false);
-                }
-            }
-        });
     }
 
-    private void openLandingPage() {
-        landingPage landing = new landingPage();
-        landing.setUserName(currentUser != null ? currentUser.getFullName() : "");
-
-        JFrame frame = new JFrame("Landing Page");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(landing);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        // Close current window
-        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        if (currentFrame != null) {
-            currentFrame.dispose();
-        }
-    }
-
-    private void performLogout() {
-        int confirm = JOptionPane.showConfirmDialog(
-            this,
-            "Are you sure you want to logout?",
-            "Logout",
-            JOptionPane.YES_NO_OPTION
-        );
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            login.setCurrentUser(null);
-
-            login log = new login();
-            log.setVisible(true);
-
-            // Close current window
-            JFrame frame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
-            if (frame != null) {
-                frame.dispose();
-            }
-        }
-    }
-
-    private void openUserProfile() {
-        userProfile profilePanel = new userProfile();
-
-        JFrame frame = new JFrame("User Profile");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(profilePanel);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        // Close current window
-        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        if (currentFrame != null) {
-            currentFrame.dispose();
-        }
-    }
-
-    private void updateProfile() {
-        if (currentUser == null) {
-            JOptionPane.showMessageDialog(this, "No user logged in!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Validate required fields
-        if (updateName.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Name is required!", "Validation Error", JOptionPane.ERROR_MESSAGE);
-            updateName.requestFocus();
-            return;
-        }
-
-        if (updateLastName.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Last Name is required!", "Validation Error", JOptionPane.ERROR_MESSAGE);
-            updateLastName.requestFocus();
-            return;
-        }
-
-        // Update user object with form data
+    private void doUpdate() {
+        if (currentUser == null) return;
         currentUser.setFirstName(updateName.getText().trim());
         currentUser.setLastName(updateLastName.getText().trim());
         currentUser.setContact(updateContact.getText().trim());
-        currentUser.setEmail(updateEmail.getText().trim());
         currentUser.setStatus(updateStatus.getText().trim());
+        currentUser.setGender(updateGenderOptionMale.isSelected() ? "Male" : (updateGenderOptionFemale.isSelected() ? "Female" : ""));
         currentUser.setAccountID(updateAccountID.getText().trim());
-        currentUser.setSchoolLevel(updateSchoolLevel.getText().trim());
         currentUser.setAddress(updateAddress.getText().trim());
         currentUser.setBirthdate(updateBirthdate.getText().trim());
+        boolean ok = userDAO.updateUser(currentUser);
+        openProfile();
+    }
 
-        // Get selected gender
-        if (updateGenderOptionMale.isSelected()) {
-            currentUser.setGender("Male");
-        } else if (updateGenderOptionFemale.isSelected()) {
-            currentUser.setGender("Female");
-        } else {
-            currentUser.setGender("");
-        }
-
-        // Update in database
-        boolean success = userDAO.updateUser(currentUser);
-
-        if (success) {
-            JOptionPane.showMessageDialog(this, "Profile updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-            // Go back to user profile
-            openUserProfile();
-        } else {
-            JOptionPane.showMessageDialog(this, "Failed to update profile!", "Error", JOptionPane.ERROR_MESSAGE);
+    private void openProfile() {
+        adminProfile p = new adminProfile();
+        JFrame frame = new JFrame("Admin Profile");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(p);
+        frame.pack();
+        frame.setSize(1020, 560);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
         }
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -248,16 +112,6 @@ public class userForm extends javax.swing.JPanel {
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        panelRound2 = new onlineenrollment.main.PanelRound();
-        dashboard = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
-        jLabel15 = new javax.swing.JLabel();
-        jLabel16 = new javax.swing.JLabel();
-        jLabel17 = new javax.swing.JLabel();
-        jLabel18 = new javax.swing.JLabel();
-        profile = new javax.swing.JLabel();
-        logout = new javax.swing.JLabel();
         panelRound1 = new onlineenrollment.main.PanelRound();
         jLabel4 = new javax.swing.JLabel();
         getFullName = new javax.swing.JLabel();
@@ -269,14 +123,12 @@ public class userForm extends javax.swing.JPanel {
         jLabel11 = new javax.swing.JLabel();
         jLabel21 = new javax.swing.JLabel();
         jLabel22 = new javax.swing.JLabel();
-        jLabel23 = new javax.swing.JLabel();
         jLabel24 = new javax.swing.JLabel();
         jLabel25 = new javax.swing.JLabel();
         updateName = new javax.swing.JTextField();
         updateContact = new javax.swing.JTextField();
         updateEmail = new javax.swing.JTextField();
         updateStatus = new javax.swing.JTextField();
-        updateSchoolLevel = new javax.swing.JTextField();
         updateLastName = new javax.swing.JTextField();
         updateAccountID = new javax.swing.JTextField();
         updateBirthdate = new javax.swing.JTextField();
@@ -287,6 +139,13 @@ public class userForm extends javax.swing.JPanel {
         jPanel3 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
+        panelRound2 = new onlineenrollment.main.PanelRound();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        jLabel15 = new javax.swing.JLabel();
+        profile = new javax.swing.JLabel();
+        logout1 = new javax.swing.JLabel();
 
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
@@ -321,88 +180,6 @@ public class userForm extends javax.swing.JPanel {
 
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1030, 80));
 
-        panelRound2.setBackground(new java.awt.Color(255, 255, 255));
-        panelRound2.setRoundBottomLeft(8);
-        panelRound2.setRoundBottomRight(8);
-        panelRound2.setRoundTopLeft(8);
-        panelRound2.setRoundTopRight(8);
-
-        dashboard.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        dashboard.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        dashboard.setText("Dashboard");
-
-        jLabel13.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel13.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel13.setText("Pre-School");
-
-        jLabel14.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel14.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel14.setText("Grade School");
-
-        jLabel15.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel15.setText("Junior High");
-
-        jLabel16.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel16.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel16.setText("Senior High");
-
-        jLabel17.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel17.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel17.setText("College");
-
-        jLabel18.setFont(new java.awt.Font("Trebuchet MS", 0, 12)); // NOI18N
-        jLabel18.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel18.setText("Enrollment Status");
-
-        profile.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        profile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        profile.setText("Profile");
-
-        logout.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        logout.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        logout.setText("Logout");
-
-        javax.swing.GroupLayout panelRound2Layout = new javax.swing.GroupLayout(panelRound2);
-        panelRound2.setLayout(panelRound2Layout);
-        panelRound2Layout.setHorizontalGroup(
-            panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(dashboard, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel13, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel16, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(profile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(logout, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        panelRound2Layout.setVerticalGroup(
-            panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelRound2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(dashboard, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(profile, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 44, Short.MAX_VALUE)
-                .addComponent(logout, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(21, 21, 21))
-        );
-
-        jPanel1.add(panelRound2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, 100, 460));
-
         panelRound1.setBackground(new java.awt.Color(255, 255, 255));
         panelRound1.setRoundBottomLeft(30);
         panelRound1.setRoundBottomRight(30);
@@ -411,7 +188,7 @@ public class userForm extends javax.swing.JPanel {
 
         jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/assets/icons/user-icon.png"))); // NOI18N
 
-        getFullName.setFont(new java.awt.Font("Trebuchet MS", 0, 14));
+        getFullName.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
         javax.swing.GroupLayout panelRound1Layout = new javax.swing.GroupLayout(panelRound1);
         panelRound1.setLayout(panelRound1Layout);
@@ -464,9 +241,6 @@ public class userForm extends javax.swing.JPanel {
         jLabel22.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
         jLabel22.setText("Account ID:");
 
-        jLabel23.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel23.setText("School Level:");
-
         jLabel24.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
         jLabel24.setText("Address:");
 
@@ -474,14 +248,17 @@ public class userForm extends javax.swing.JPanel {
         jLabel25.setText("Birthdate:");
 
         updateName.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateName.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateNameActionPerformed(evt);
+            }
+        });
 
         updateContact.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
         updateEmail.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
         updateStatus.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-
-        updateSchoolLevel.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
         updateLastName.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
@@ -494,6 +271,11 @@ public class userForm extends javax.swing.JPanel {
         updateGenderOptionMale.setText("Male");
 
         updateGenderOptionFemale.setText("Female");
+        updateGenderOptionFemale.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateGenderOptionFemaleActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout panelRound4Layout = new javax.swing.GroupLayout(panelRound4);
         panelRound4.setLayout(panelRound4Layout);
@@ -518,7 +300,6 @@ public class userForm extends javax.swing.JPanel {
                 .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(jLabel22, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel23, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel24, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -528,7 +309,6 @@ public class userForm extends javax.swing.JPanel {
                         .addComponent(updateGenderOptionMale, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(updateGenderOptionFemale, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(updateSchoolLevel)
                     .addComponent(updateBirthdate)
                     .addComponent(updateAddress)
                     .addComponent(updateAccountID, javax.swing.GroupLayout.Alignment.TRAILING))
@@ -554,21 +334,21 @@ public class userForm extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel23, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(updateContact, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateSchoolLevel, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(updateAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateBirthdate, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel25))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelRound4Layout.createSequentialGroup()
+                        .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(updateEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel25))
+                        .addGap(6, 6, 6)
+                        .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(updateStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(updateBirthdate, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25))
         );
 
@@ -622,6 +402,73 @@ public class userForm extends javax.swing.JPanel {
 
         jPanel1.add(updateProfile, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 450, 160, 70));
 
+        panelRound2.setBackground(new java.awt.Color(255, 255, 255));
+        panelRound2.setRoundBottomLeft(8);
+        panelRound2.setRoundBottomRight(8);
+        panelRound2.setRoundTopLeft(8);
+        panelRound2.setRoundTopRight(8);
+
+        jLabel12.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel12.setText("Dashboard");
+
+        jLabel13.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel13.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel13.setText("Enrollment Management");
+
+        jLabel14.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel14.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel14.setText("Financials");
+
+        jLabel15.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel15.setText("User Management");
+
+        profile.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        profile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        profile.setText("Profile");
+
+        logout1.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        logout1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        logout1.setText("Logout");
+
+        javax.swing.GroupLayout panelRound2Layout = new javax.swing.GroupLayout(panelRound2);
+        panelRound2.setLayout(panelRound2Layout);
+        panelRound2Layout.setHorizontalGroup(
+            panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(panelRound2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelRound2Layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(logout1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(profile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        panelRound2Layout.setVerticalGroup(
+            panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelRound2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(profile, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(logout1, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(175, Short.MAX_VALUE))
+        );
+
+        jPanel1.add(panelRound2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 130, 460));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -634,21 +481,28 @@ public class userForm extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void updateNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateNameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_updateNameActionPerformed
+
+    private void updateGenderOptionFemaleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateGenderOptionFemaleActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_updateGenderOptionFemaleActionPerformed
+        
+    }
+
+    // Variables declaration - do not modify
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel dashboard;
     private javax.swing.JLabel getFullName;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
-    private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
-    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel3;
@@ -661,7 +515,7 @@ public class userForm extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JLabel logout;
+    private javax.swing.JLabel logout1;
     private onlineenrollment.main.PanelRound panelRound1;
     private onlineenrollment.main.PanelRound panelRound2;
     private onlineenrollment.main.PanelRound panelRound4;
@@ -676,7 +530,6 @@ public class userForm extends javax.swing.JPanel {
     private javax.swing.JTextField updateLastName;
     private javax.swing.JTextField updateName;
     private onlineenrollment.main.PanelRound updateProfile;
-    private javax.swing.JTextField updateSchoolLevel;
     private javax.swing.JTextField updateStatus;
     // End of variables declaration//GEN-END:variables
 }

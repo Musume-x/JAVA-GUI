@@ -8,6 +8,8 @@ package admin;
 
 import dao.EnrollmentDAO;
 import dao.UserDAO;
+import main.login;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.DefaultListModel;
@@ -67,6 +69,20 @@ public class adminDashPane extends javax.swing.JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 showUserManagement();
+            }
+        });
+        
+        profile.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openAdminProfile();
+            }
+        });
+        
+        logout1.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                performLogout();
             }
         });
     }
@@ -260,6 +276,31 @@ public class adminDashPane extends javax.swing.JPanel {
     public void refreshCounts() {
         updateCounts();
     }
+    
+    private void openAdminProfile() {
+        adminProfile p = new adminProfile();
+        JFrame frame = new JFrame("Admin Profile");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(p);
+        frame.pack();
+        frame.setSize(1020, 560);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
+    }
+    
+    private void performLogout() {
+        login.setCurrentUser(null);
+        login log = new login();
+        log.setVisible(true);
+        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
+    }
 
     /** This method is called from within the constructor to
      * initialize the form.
@@ -270,6 +311,7 @@ public class adminDashPane extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        logout = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         panelRound5 = new onlineenrollment.main.PanelRound();
         jLabel5 = new javax.swing.JLabel();
@@ -284,6 +326,8 @@ public class adminDashPane extends javax.swing.JPanel {
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
+        profile = new javax.swing.JLabel();
+        logout1 = new javax.swing.JLabel();
         panelRound3 = new onlineenrollment.main.PanelRound();
         jLabel3 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -294,6 +338,10 @@ public class adminDashPane extends javax.swing.JPanel {
         jList1 = new javax.swing.JList<>();
         panelRound6 = new onlineenrollment.main.PanelRound();
         jLabel6 = new javax.swing.JLabel();
+
+        logout.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        logout.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        logout.setText("Logout");
 
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
@@ -406,6 +454,14 @@ public class adminDashPane extends javax.swing.JPanel {
         jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel11.setText("User Management");
 
+        profile.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        profile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        profile.setText("Profile");
+
+        logout1.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        logout1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        logout1.setText("Logout");
+
         javax.swing.GroupLayout panelRound2Layout = new javax.swing.GroupLayout(panelRound2);
         panelRound2.setLayout(panelRound2Layout);
         panelRound2Layout.setHorizontalGroup(
@@ -414,6 +470,14 @@ public class adminDashPane extends javax.swing.JPanel {
             .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)
             .addComponent(jLabel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jLabel11, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(panelRound2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelRound2Layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(logout1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(profile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         panelRound2Layout.setVerticalGroup(
             panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -426,7 +490,11 @@ public class adminDashPane extends javax.swing.JPanel {
                 .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(263, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(profile, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(logout1, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(175, Short.MAX_VALUE))
         );
 
         jPanel1.add(panelRound2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 150, 460));
@@ -577,21 +645,20 @@ public class adminDashPane extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
-    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JTable jTable1;
     private javax.swing.JTable jTable2;
+    private javax.swing.JLabel logout;
+    private javax.swing.JLabel logout1;
     private onlineenrollment.main.PanelRound panelRound1;
     private onlineenrollment.main.PanelRound panelRound2;
     private onlineenrollment.main.PanelRound panelRound3;
     private onlineenrollment.main.PanelRound panelRound4;
     private onlineenrollment.main.PanelRound panelRound5;
     private onlineenrollment.main.PanelRound panelRound6;
+    private javax.swing.JLabel profile;
     // End of variables declaration//GEN-END:variables
 
 }

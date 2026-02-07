@@ -298,10 +298,7 @@
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Trebuchet MS" size="14" style="0"/>
                 </Property>
-<<<<<<< HEAD
                 <Property name="horizontalAlignment" type="int" value="0"/>
-=======
->>>>>>> 0d0fed7e577e9fd14bfba6704f030f96597a9e99
               </Properties>
             </Component>
           </SubComponents>
@@ -386,7 +383,6 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="32" pref="32" max="-2" attributes="0"/>
-<<<<<<< HEAD
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jLabel21" alignment="0" max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
@@ -421,39 +417,6 @@
                               <Component id="jLabel24" alignment="3" min="-2" pref="47" max="-2" attributes="0"/>
                               <Component id="getEmail" alignment="3" max="32767" attributes="0"/>
                           </Group>
-=======
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel7" alignment="3" min="-2" pref="44" max="-2" attributes="0"/>
-                          <Component id="jLabel21" alignment="0" max="32767" attributes="0"/>
-                          <Component id="getName" alignment="3" max="32767" attributes="0"/>
-                          <Component id="getGender" alignment="3" min="-2" pref="44" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="getLastName" alignment="3" max="32767" attributes="0"/>
-                          <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="jLabel8" alignment="3" min="-2" pref="43" max="-2" attributes="0"/>
-                                  <Component id="jLabel22" alignment="1" min="-2" pref="44" max="-2" attributes="0"/>
-                                  <Component id="getAccountID" alignment="3" max="32767" attributes="0"/>
-                              </Group>
-                          </Group>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel9" alignment="3" min="-2" pref="47" max="-2" attributes="0"/>
-                          <Component id="jLabel23" alignment="3" min="-2" pref="47" max="-2" attributes="0"/>
-                          <Component id="getContact" alignment="3" max="32767" attributes="0"/>
-                          <Component id="getSchoolLevel" alignment="1" max="32767" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel10" alignment="3" min="-2" pref="47" max="-2" attributes="0"/>
-                          <Component id="jLabel24" alignment="3" min="-2" pref="47" max="-2" attributes="0"/>
-                          <Component id="getEmail" alignment="3" max="32767" attributes="0"/>
-                          <Component id="getAddress" alignment="1" max="32767" attributes="0"/>
->>>>>>> 0d0fed7e577e9fd14bfba6704f030f96597a9e99
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -554,12 +517,9 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="getLastName">
-<<<<<<< HEAD
               <Events>
                 <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="getLastNameMouseEntered"/>
               </Events>
-=======
->>>>>>> 0d0fed7e577e9fd14bfba6704f030f96597a9e99
             </Component>
             <Component class="javax.swing.JLabel" name="getName">
             </Component>

@@ -1,9 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package gui;
+package admin;
 
 import main.login;
 import model.User;
@@ -11,182 +6,101 @@ import dao.UserDAO;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
-
-
-
-/**
- *
- * @author miwa
- */
-public class userProfile extends javax.swing.JPanel {
-
+public class adminProfile extends javax.swing.JPanel {
 
     private UserDAO userDAO;
     private User currentUser;
 
-
-
-    /**
-     * Creates new form userProfile
-     */
-    public userProfile() {
+    public adminProfile() {
         initComponents();
-
         userDAO = new UserDAO();
-        addEventHandlers();
-        loadUserData();
+        addEvents();
+        loadUser();
     }
 
-    private void loadUserData() {
+    private void loadUser() {
         currentUser = login.getCurrentUser();
         if (currentUser != null) {
-            // Refresh user data from database
-            User refreshedUser = userDAO.getUserById(currentUser.getId());
-            if (refreshedUser != null) {
-                currentUser = refreshedUser;
+            User refreshed = userDAO.getUserById(currentUser.getId());
+            if (refreshed != null) {
+                currentUser = refreshed;
             }
-
-            // Display user data
-            getFullName.setText(currentUser.getFullName());
-            getName.setText(currentUser.getName());
+            getFullName.setText(currentUser.getFirstName() + " " + (currentUser.getLastName() != null ? currentUser.getLastName() : ""));
+            getName.setText(currentUser.getFirstName() != null ? currentUser.getFirstName() : "");
             getLastName.setText(currentUser.getLastName() != null ? currentUser.getLastName() : "");
-            getContact.setText(currentUser.getContact() != null ? currentUser.getContact() : "");
             getEmail.setText(currentUser.getEmail() != null ? currentUser.getEmail() : "");
             getStatus.setText(currentUser.getStatus() != null ? currentUser.getStatus() : "");
             getGender.setText(currentUser.getGender() != null ? currentUser.getGender() : "");
             getAccountID.setText(currentUser.getAccountID() != null ? currentUser.getAccountID() : "");
-            getSchoolLevel.setText(currentUser.getSchoolLevel() != null ? currentUser.getSchoolLevel() : "");
             getAddress.setText(currentUser.getAddress() != null ? currentUser.getAddress() : "");
             getBirthdate.setText(currentUser.getBirthdate() != null ? currentUser.getBirthdate() : "");
-
-            // Update welcome message
-            jLabel3.setText("Welcome, " + currentUser.getFullName() + "!");
-        } else {
-            JOptionPane.showMessageDialog(this, "No user logged in!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void addEventHandlers() {
-        // Dashboard click - go to landingPage
-        jLabel12.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                openLandingPage();
-            }
-        });
-
-        // Logout click
-        jLabel20.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                performLogout();
-            }
-        });
-
-        // Profile click - already on profile page
-        profile.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // Already on profile page, do nothing
-            }
-        });
-
-        // Edit Profile click - go to userForm
+    private void addEvents() {
         editProfile.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                openUserForm();
+                openAdminForm();
+            }
+        });
+        profile.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                adminProfile p = new adminProfile();
+                JFrame frame = new JFrame("Admin Profile");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.add(p);
+                frame.pack();
+                frame.setSize(1020, 560);
+                frame.setLocationRelativeTo(null);
+                frame.setVisible(true);
+                JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(adminProfile.this);
+                if (currentFrame != null) {
+                    currentFrame.dispose();
+                }
+            }
+        });
+        logout1.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                login.setCurrentUser(null);
+                login log = new login();
+                log.setVisible(true);
+                JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(adminProfile.this);
+                if (currentFrame != null) {
+                    currentFrame.dispose();
+                }
             }
         });
     }
 
-    private void openLandingPage() {
-        landingPage landing = new landingPage();
-        landing.setUserName(currentUser != null ? currentUser.getFullName() : "");
-
-        JFrame frame = new JFrame("Landing Page");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(landing);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        // Close current window
-        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        if (currentFrame != null) {
-            currentFrame.dispose();
-        }
-    }
-
-    private void performLogout() {
-        int confirm = JOptionPane.showConfirmDialog(
-            this,
-            "Are you sure you want to logout?",
-            "Logout",
-            JOptionPane.YES_NO_OPTION
-        );
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            login.setCurrentUser(null);
-
-            login log = new login();
-            log.setVisible(true);
-
-            // Close current window
-            JFrame frame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
-            if (frame != null) {
-                frame.dispose();
-            }
-        }
-    }
-
-    private void openUserForm() {
-        userForm form = new userForm();
-
-        JFrame frame = new JFrame("Edit Profile");
+    private void openAdminForm() {
+        adminForm form = new adminForm();
+        JFrame frame = new JFrame("Edit Admin Profile");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(form);
         frame.pack();
         frame.setSize(1020, 560);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-
-        // Close current window
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();
         }
-
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        panelRound2 = new onlineenrollment.main.PanelRound();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
-        jLabel15 = new javax.swing.JLabel();
-        jLabel16 = new javax.swing.JLabel();
-        jLabel17 = new javax.swing.JLabel();
-        jLabel18 = new javax.swing.JLabel();
-        profile = new javax.swing.JLabel();
-        jLabel20 = new javax.swing.JLabel();
         panelRound1 = new onlineenrollment.main.PanelRound();
         jLabel4 = new javax.swing.JLabel();
         getFullName = new javax.swing.JLabel();
@@ -215,10 +129,13 @@ public class userProfile extends javax.swing.JPanel {
         jPanel3 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
-
-        jLabel1.setText("jLabel1");
-
-        jTextField2.setText("jTextField2");
+        panelRound2 = new onlineenrollment.main.PanelRound();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        jLabel15 = new javax.swing.JLabel();
+        profile = new javax.swing.JLabel();
+        logout1 = new javax.swing.JLabel();
 
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
@@ -252,93 +169,6 @@ public class userProfile extends javax.swing.JPanel {
         );
 
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1030, 80));
-
-        panelRound2.setBackground(new java.awt.Color(255, 255, 255));
-        panelRound2.setRoundBottomLeft(8);
-        panelRound2.setRoundBottomRight(8);
-        panelRound2.setRoundTopLeft(8);
-        panelRound2.setRoundTopRight(8);
-
-        jLabel12.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel12.setText("Dashboard");
-        jLabel12.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                jLabel12MouseEntered(evt);
-            }
-        });
-
-        jLabel13.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel13.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel13.setText("Pre-School");
-
-        jLabel14.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel14.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel14.setText("Grade School");
-
-        jLabel15.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel15.setText("Junior High");
-
-        jLabel16.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel16.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel16.setText("Senior High");
-
-        jLabel17.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel17.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel17.setText("College");
-
-        jLabel18.setFont(new java.awt.Font("Trebuchet MS", 0, 12)); // NOI18N
-        jLabel18.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel18.setText("Enrollment Status");
-
-        profile.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        profile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        profile.setText("Profile");
-
-        jLabel20.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        jLabel20.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel20.setText("Logout");
-
-        javax.swing.GroupLayout panelRound2Layout = new javax.swing.GroupLayout(panelRound2);
-        panelRound2.setLayout(panelRound2Layout);
-        panelRound2Layout.setHorizontalGroup(
-            panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel13, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel16, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(profile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jLabel20, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        panelRound2Layout.setVerticalGroup(
-            panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelRound2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(profile, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 44, Short.MAX_VALUE)
-                .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(21, 21, 21))
-        );
-
-        jPanel1.add(panelRound2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, 100, 460));
 
         panelRound1.setBackground(new java.awt.Color(255, 255, 255));
         panelRound1.setRoundBottomLeft(30);
@@ -556,6 +386,73 @@ public class userProfile extends javax.swing.JPanel {
 
         jPanel1.add(editProfile, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 450, 150, 70));
 
+        panelRound2.setBackground(new java.awt.Color(255, 255, 255));
+        panelRound2.setRoundBottomLeft(8);
+        panelRound2.setRoundBottomRight(8);
+        panelRound2.setRoundTopLeft(8);
+        panelRound2.setRoundTopRight(8);
+
+        jLabel12.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel12.setText("Dashboard");
+
+        jLabel13.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel13.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel13.setText("Enrollment Management");
+
+        jLabel14.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel14.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel14.setText("Financials");
+
+        jLabel15.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel15.setText("User Management");
+
+        profile.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        profile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        profile.setText("Profile");
+
+        logout1.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        logout1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        logout1.setText("Logout");
+
+        javax.swing.GroupLayout panelRound2Layout = new javax.swing.GroupLayout(panelRound2);
+        panelRound2.setLayout(panelRound2Layout);
+        panelRound2Layout.setHorizontalGroup(
+            panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(panelRound2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(panelRound2Layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(logout1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(profile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        panelRound2Layout.setVerticalGroup(
+            panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelRound2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(profile, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(logout1, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(175, Short.MAX_VALUE))
+        );
+
+        jPanel1.add(panelRound2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 130, 460));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -568,18 +465,13 @@ public class userProfile extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-
     private void getLastNameMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_getLastNameMouseEntered
         // TODO add your handling code here:
     }//GEN-LAST:event_getLastNameMouseEntered
+        
+    }
 
-
-
-    private void jLabel12MouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel12MouseEntered
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jLabel12MouseEntered
-
-
+    // Variables declaration - do not modify
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private onlineenrollment.main.PanelRound editProfile;
     private javax.swing.JLabel getAccountID;
@@ -593,18 +485,13 @@ public class userProfile extends javax.swing.JPanel {
     private javax.swing.JLabel getName;
     private javax.swing.JLabel getSchoolLevel;
     private javax.swing.JLabel getStatus;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
-    private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
-    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
@@ -620,7 +507,7 @@ public class userProfile extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JLabel logout1;
     private onlineenrollment.main.PanelRound panelRound1;
     private onlineenrollment.main.PanelRound panelRound2;
     private onlineenrollment.main.PanelRound panelRound4;
