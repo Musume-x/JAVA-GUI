@@ -6,6 +6,7 @@ import model.User;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 public class adminForm extends javax.swing.JPanel {
 
@@ -22,28 +23,88 @@ public class adminForm extends javax.swing.JPanel {
     private void loadUser() {
         currentUser = login.getCurrentUser();
         if (currentUser != null) {
-            updateName.setText(currentUser.getFirstName() != null ? currentUser.getFirstName() : "");
-            updateLastName.setText(currentUser.getLastName() != null ? currentUser.getLastName() : "");
-            updateContact.setText(currentUser.getContact() != null ? currentUser.getContact() : "");
-            updateStatus.setText(currentUser.getStatus() != null ? currentUser.getStatus() : "");
-            updateAccountID.setText(currentUser.getAccountID() != null ? currentUser.getAccountID() : "");
-            updateAddress.setText(currentUser.getAddress() != null ? currentUser.getAddress() : "");
-            updateBirthdate.setText(currentUser.getBirthdate() != null ? currentUser.getBirthdate() : "");
-            getFullName.setText(currentUser.getFirstName() + " " + (currentUser.getLastName() != null ? currentUser.getLastName() : ""));
-            String g = currentUser.getGender() != null ? currentUser.getGender() : "";
-            updateGenderOptionMale.setSelected("Male".equalsIgnoreCase(g));
-            updateGenderOptionFemale.setSelected("Female".equalsIgnoreCase(g));
+            // Refresh user data from database
+            User refreshedUser = userDAO.getUserById(currentUser.getId());
+            if (refreshedUser != null) {
+                currentUser = refreshedUser;
+            }
+            // Populate form fields
+            updateNameadmin.setText(currentUser.getFirstName() != null ? currentUser.getFirstName() : "");
+            updateLastNameadmin.setText(currentUser.getLastName() != null ? currentUser.getLastName() : "");
+            updateContactadmin.setText(currentUser.getContact() != null ? currentUser.getContact() : "");
+            updateEmailadmin.setText(currentUser.getEmail() != null ? currentUser.getEmail() : "");
+            updateStatusadmin.setText(currentUser.getStatus() != null ? currentUser.getStatus() : "");
+            updateAccountIDadmin.setText(currentUser.getAccountID() != null ? currentUser.getAccountID() : "");
+            updateAddressadmin.setText(currentUser.getAddress() != null ? currentUser.getAddress() : "");
+            updateBirthdateadmin.setText(currentUser.getBirthdate() != null ? currentUser.getBirthdate() : "");
+            getFullNameadmin.setText(currentUser.getFirstName() + " " + (currentUser.getLastName() != null ? currentUser.getLastName() : ""));
+            // Set gender checkboxes
+            String gender = currentUser.getGender();
+            if (gender != null) {
+                if (gender.equalsIgnoreCase("Male")) {
+                    updateGenderOptionMaleadmin.setSelected(true);
+                    updateGenderOptionFemaleadmin.setSelected(false);
+                } else if (gender.equalsIgnoreCase("Female")) {
+                    updateGenderOptionMaleadmin.setSelected(false);
+                    updateGenderOptionFemaleadmin.setSelected(true);
+                }
+            }
+            // Update welcome message
+            jLabel3.setText("Welcome, " + currentUser.getFullName() + "!");
+        } else {
+            JOptionPane.showMessageDialog(this, "No user logged in!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void wireEvents() {
-        updateGenderOptionMale.addActionListener(e -> {
-            if (updateGenderOptionMale.isSelected()) updateGenderOptionFemale.setSelected(false);
+        // Dashboard and nav clicks - go to admin dashboard
+        jLabel12.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openAdminDashboard();
+            }
         });
-        updateGenderOptionFemale.addActionListener(e -> {
-            if (updateGenderOptionFemale.isSelected()) updateGenderOptionMale.setSelected(false);
+        jLabel13.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openAdminDashboard();
+            }
         });
-        updateProfile.addMouseListener(new MouseAdapter() {
+        jLabel14.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openAdminDashboard();
+            }
+        });
+        jLabel15.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openAdminDashboard();
+            }
+        });
+        // Profile click - go to adminProfile
+        profile.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openAdminProfile();
+            }
+        });
+        // Logout click
+        logout1.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                performLogout();
+            }
+        });
+        // Gender checkbox mutual exclusion
+        updateGenderOptionMaleadmin.addActionListener(e -> {
+            if (updateGenderOptionMaleadmin.isSelected()) updateGenderOptionFemaleadmin.setSelected(false);
+        });
+        updateGenderOptionFemaleadmin.addActionListener(e -> {
+            if (updateGenderOptionFemaleadmin.isSelected()) updateGenderOptionMaleadmin.setSelected(false);
+        });
+        // Update Profile click
+        updateProfileadmin.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 doUpdate();
@@ -55,41 +116,79 @@ public class adminForm extends javax.swing.JPanel {
                 doUpdate();
             }
         });
-        profile.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                openProfile();
+    }
+
+    private void openAdminDashboard() {
+        adminDashPane adminPanel = new adminDashPane();
+        JFrame frame = new JFrame("Admin Dashboard");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(adminPanel);
+        frame.pack();
+        frame.setSize(1020, 560);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
+    }
+
+    private void performLogout() {
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to logout?",
+            "Logout",
+            JOptionPane.YES_NO_OPTION
+        );
+        if (confirm == JOptionPane.YES_OPTION) {
+            login.setCurrentUser(null);
+            login log = new login();
+            log.setVisible(true);
+            JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+            if (currentFrame != null) {
+                currentFrame.dispose();
             }
-        });
-        logout1.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                login.setCurrentUser(null);
-                login log = new login();
-                log.setVisible(true);
-                JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(adminForm.this);
-                if (currentFrame != null) {
-                    currentFrame.dispose();
-                }
-            }
-        });
+        }
     }
 
     private void doUpdate() {
-        if (currentUser == null) return;
-        currentUser.setFirstName(updateName.getText().trim());
-        currentUser.setLastName(updateLastName.getText().trim());
-        currentUser.setContact(updateContact.getText().trim());
-        currentUser.setStatus(updateStatus.getText().trim());
-        currentUser.setGender(updateGenderOptionMale.isSelected() ? "Male" : (updateGenderOptionFemale.isSelected() ? "Female" : ""));
-        currentUser.setAccountID(updateAccountID.getText().trim());
-        currentUser.setAddress(updateAddress.getText().trim());
-        currentUser.setBirthdate(updateBirthdate.getText().trim());
-        boolean ok = userDAO.updateUser(currentUser);
-        openProfile();
+        if (currentUser == null) {
+            JOptionPane.showMessageDialog(this, "No user logged in!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // Validate required fields
+        if (updateNameadmin.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Name is required!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            updateNameadmin.requestFocus();
+            return;
+        }
+        if (updateLastNameadmin.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Last Name is required!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            updateLastNameadmin.requestFocus();
+            return;
+        }
+        // Update user object with form data
+        currentUser.setFirstName(updateNameadmin.getText().trim());
+        currentUser.setLastName(updateLastNameadmin.getText().trim());
+        currentUser.setContact(updateContactadmin.getText().trim());
+        currentUser.setEmail(updateEmailadmin.getText().trim());
+        currentUser.setStatus(updateStatusadmin.getText().trim());
+        currentUser.setGender(updateGenderOptionMaleadmin.isSelected() ? "Male" : (updateGenderOptionFemaleadmin.isSelected() ? "Female" : ""));
+        currentUser.setAccountID(updateAccountIDadmin.getText().trim());
+        currentUser.setAddress(updateAddressadmin.getText().trim());
+        currentUser.setBirthdate(updateBirthdateadmin.getText().trim());
+        // Update in database
+        boolean success = userDAO.updateUser(currentUser);
+        if (success) {
+            login.setCurrentUser(currentUser);  // Sync in-memory user
+            JOptionPane.showMessageDialog(this, "Profile updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            openAdminProfile();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update profile!", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
-    private void openProfile() {
+    private void openAdminProfile() {
         adminProfile p = new adminProfile();
         JFrame frame = new JFrame("Admin Profile");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -114,7 +213,7 @@ public class adminForm extends javax.swing.JPanel {
         jLabel3 = new javax.swing.JLabel();
         panelRound1 = new onlineenrollment.main.PanelRound();
         jLabel4 = new javax.swing.JLabel();
-        getFullName = new javax.swing.JLabel();
+        getFullNameadmin = new javax.swing.JLabel();
         panelRound4 = new onlineenrollment.main.PanelRound();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
@@ -125,17 +224,17 @@ public class adminForm extends javax.swing.JPanel {
         jLabel22 = new javax.swing.JLabel();
         jLabel24 = new javax.swing.JLabel();
         jLabel25 = new javax.swing.JLabel();
-        updateName = new javax.swing.JTextField();
-        updateContact = new javax.swing.JTextField();
-        updateEmail = new javax.swing.JTextField();
-        updateStatus = new javax.swing.JTextField();
-        updateLastName = new javax.swing.JTextField();
-        updateAccountID = new javax.swing.JTextField();
-        updateBirthdate = new javax.swing.JTextField();
-        updateAddress = new javax.swing.JTextField();
-        updateGenderOptionMale = new javax.swing.JCheckBox();
-        updateGenderOptionFemale = new javax.swing.JCheckBox();
-        updateProfile = new onlineenrollment.main.PanelRound();
+        updateNameadmin = new javax.swing.JTextField();
+        updateContactadmin = new javax.swing.JTextField();
+        updateEmailadmin = new javax.swing.JTextField();
+        updateStatusadmin = new javax.swing.JTextField();
+        updateLastNameadmin = new javax.swing.JTextField();
+        updateAccountIDadmin = new javax.swing.JTextField();
+        updateBirthdateadmin = new javax.swing.JTextField();
+        updateAddressadmin = new javax.swing.JTextField();
+        updateGenderOptionMaleadmin = new javax.swing.JCheckBox();
+        updateGenderOptionFemaleadmin = new javax.swing.JCheckBox();
+        updateProfileadmin = new onlineenrollment.main.PanelRound();
         jPanel3 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
@@ -188,7 +287,7 @@ public class adminForm extends javax.swing.JPanel {
 
         jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/assets/icons/user-icon.png"))); // NOI18N
 
-        getFullName.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        getFullNameadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
         javax.swing.GroupLayout panelRound1Layout = new javax.swing.GroupLayout(panelRound1);
         panelRound1.setLayout(panelRound1Layout);
@@ -196,7 +295,7 @@ public class adminForm extends javax.swing.JPanel {
             panelRound1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelRound1Layout.createSequentialGroup()
                 .addGap(37, 37, 37)
-                .addComponent(getFullName, javax.swing.GroupLayout.PREFERRED_SIZE, 237, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(getFullNameadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 237, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(36, Short.MAX_VALUE))
             .addGroup(panelRound1Layout.createSequentialGroup()
                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -208,7 +307,7 @@ public class adminForm extends javax.swing.JPanel {
                 .addGap(28, 28, 28)
                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(getFullName, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(getFullNameadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -247,33 +346,33 @@ public class adminForm extends javax.swing.JPanel {
         jLabel25.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
         jLabel25.setText("Birthdate:");
 
-        updateName.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
-        updateName.addActionListener(new java.awt.event.ActionListener() {
+        updateNameadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateNameadmin.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updateNameActionPerformed(evt);
+                updateNameadminActionPerformed(evt);
             }
         });
 
-        updateContact.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateContactadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
-        updateEmail.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateEmailadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
-        updateStatus.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateStatusadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
-        updateLastName.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateLastNameadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
-        updateAccountID.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateAccountIDadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
-        updateBirthdate.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateBirthdateadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
-        updateAddress.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        updateAddressadmin.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
 
-        updateGenderOptionMale.setText("Male");
+        updateGenderOptionMaleadmin.setText("Male");
 
-        updateGenderOptionFemale.setText("Female");
-        updateGenderOptionFemale.addActionListener(new java.awt.event.ActionListener() {
+        updateGenderOptionFemaleadmin.setText("Female");
+        updateGenderOptionFemaleadmin.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                updateGenderOptionFemaleActionPerformed(evt);
+                updateGenderOptionFemaleadminActionPerformed(evt);
             }
         });
 
@@ -291,11 +390,11 @@ public class adminForm extends javax.swing.JPanel {
                     .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(updateName, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateContact, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateLastName, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(updateNameadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(updateContactadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(updateEmailadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(updateStatusadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(updateLastNameadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(40, 40, 40)
                 .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -306,12 +405,12 @@ public class adminForm extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelRound4Layout.createSequentialGroup()
-                        .addComponent(updateGenderOptionMale, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(updateGenderOptionMaleadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(updateGenderOptionFemale, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(updateBirthdate)
-                    .addComponent(updateAddress)
-                    .addComponent(updateAccountID, javax.swing.GroupLayout.Alignment.TRAILING))
+                        .addComponent(updateGenderOptionFemaleadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(updateBirthdateadmin)
+                    .addComponent(updateAddressadmin)
+                    .addComponent(updateAccountIDadmin, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addGap(24, 24, 24))
         );
         panelRound4Layout.setVerticalGroup(
@@ -322,43 +421,43 @@ public class adminForm extends javax.swing.JPanel {
                     .addComponent(jLabel21, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(updateName, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(updateGenderOptionMale)
-                        .addComponent(updateGenderOptionFemale)))
+                        .addComponent(updateNameadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(updateGenderOptionMaleadmin)
+                        .addComponent(updateGenderOptionFemaleadmin)))
                 .addGap(6, 6, 6)
                 .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel22, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateLastName, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateAccountID, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(updateLastNameadmin, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(updateAccountIDadmin, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateContact, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(updateContactadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(updateAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(updateAddressadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panelRound4Layout.createSequentialGroup()
                         .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(updateEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(updateEmailadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel25))
                         .addGap(6, 6, 6)
                         .addGroup(panelRound4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(updateStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(updateBirthdate, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(updateStatusadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(updateBirthdateadmin, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25))
         );
 
         jPanel1.add(panelRound4, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 100, 540, 310));
 
-        updateProfile.setBackground(new java.awt.Color(255, 255, 255));
-        updateProfile.setRoundBottomLeft(15);
-        updateProfile.setRoundBottomRight(15);
-        updateProfile.setRoundTopLeft(15);
-        updateProfile.setRoundTopRight(15);
+        updateProfileadmin.setBackground(new java.awt.Color(255, 255, 255));
+        updateProfileadmin.setRoundBottomLeft(15);
+        updateProfileadmin.setRoundBottomRight(15);
+        updateProfileadmin.setRoundTopLeft(15);
+        updateProfileadmin.setRoundTopRight(15);
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 255));
 
@@ -384,23 +483,23 @@ public class adminForm extends javax.swing.JPanel {
             .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        javax.swing.GroupLayout updateProfileLayout = new javax.swing.GroupLayout(updateProfile);
-        updateProfile.setLayout(updateProfileLayout);
-        updateProfileLayout.setHorizontalGroup(
-            updateProfileLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(updateProfileLayout.createSequentialGroup()
+        javax.swing.GroupLayout updateProfileadminLayout = new javax.swing.GroupLayout(updateProfileadmin);
+        updateProfileadmin.setLayout(updateProfileadminLayout);
+        updateProfileadminLayout.setHorizontalGroup(
+            updateProfileadminLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(updateProfileadminLayout.createSequentialGroup()
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
-        updateProfileLayout.setVerticalGroup(
-            updateProfileLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, updateProfileLayout.createSequentialGroup()
+        updateProfileadminLayout.setVerticalGroup(
+            updateProfileadminLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, updateProfileadminLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
-        jPanel1.add(updateProfile, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 450, 160, 70));
+        jPanel1.add(updateProfileadmin, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 450, 160, 70));
 
         panelRound2.setBackground(new java.awt.Color(255, 255, 255));
         panelRound2.setRoundBottomLeft(8);
@@ -477,23 +576,23 @@ public class adminForm extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 560, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 551, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void updateNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateNameActionPerformed
+    private void updateNameadminActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateNameadminActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_updateNameActionPerformed
+    }//GEN-LAST:event_updateNameadminActionPerformed
 
-    private void updateGenderOptionFemaleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateGenderOptionFemaleActionPerformed
+    private void updateGenderOptionFemaleadminActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateGenderOptionFemaleadminActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_updateGenderOptionFemaleActionPerformed
-        
-    }
+    }//GEN-LAST:event_updateGenderOptionFemaleadminActionPerformed
 
     // Variables declaration - do not modify
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel getFullName;
+    private javax.swing.JLabel getFullNameadmin;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
@@ -520,16 +619,16 @@ public class adminForm extends javax.swing.JPanel {
     private onlineenrollment.main.PanelRound panelRound2;
     private onlineenrollment.main.PanelRound panelRound4;
     private javax.swing.JLabel profile;
-    private javax.swing.JTextField updateAccountID;
-    private javax.swing.JTextField updateAddress;
-    private javax.swing.JTextField updateBirthdate;
-    private javax.swing.JTextField updateContact;
-    private javax.swing.JTextField updateEmail;
-    private javax.swing.JCheckBox updateGenderOptionFemale;
-    private javax.swing.JCheckBox updateGenderOptionMale;
-    private javax.swing.JTextField updateLastName;
-    private javax.swing.JTextField updateName;
-    private onlineenrollment.main.PanelRound updateProfile;
-    private javax.swing.JTextField updateStatus;
+    private javax.swing.JTextField updateAccountIDadmin;
+    private javax.swing.JTextField updateAddressadmin;
+    private javax.swing.JTextField updateBirthdateadmin;
+    private javax.swing.JTextField updateContactadmin;
+    private javax.swing.JTextField updateEmailadmin;
+    private javax.swing.JCheckBox updateGenderOptionFemaleadmin;
+    private javax.swing.JCheckBox updateGenderOptionMaleadmin;
+    private javax.swing.JTextField updateLastNameadmin;
+    private javax.swing.JTextField updateNameadmin;
+    private onlineenrollment.main.PanelRound updateProfileadmin;
+    private javax.swing.JTextField updateStatusadmin;
     // End of variables declaration//GEN-END:variables
 }

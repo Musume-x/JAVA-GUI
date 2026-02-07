@@ -10,6 +10,7 @@ import dao.EnrollmentDAO;
 import dao.UserDAO;
 import main.login;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.DefaultListModel;
@@ -293,12 +294,20 @@ public class adminDashPane extends javax.swing.JPanel {
     }
     
     private void performLogout() {
-        login.setCurrentUser(null);
-        login log = new login();
-        log.setVisible(true);
-        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
-        if (currentFrame != null) {
-            currentFrame.dispose();
+        int confirm = JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to logout?",
+            "Logout",
+            JOptionPane.YES_NO_OPTION
+        );
+        if (confirm == JOptionPane.YES_OPTION) {
+            login.setCurrentUser(null);
+            login log = new login();
+            log.setVisible(true);
+            JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+            if (currentFrame != null) {
+                currentFrame.dispose();
+            }
         }
     }
 

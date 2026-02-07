@@ -227,6 +227,7 @@ public class userForm extends javax.swing.JPanel {
         boolean success = userDAO.updateUser(currentUser);
 
         if (success) {
+            login.setCurrentUser(currentUser);  // Sync in-memory user
             JOptionPane.showMessageDialog(this, "Profile updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             // Go back to user profile
             openUserProfile();

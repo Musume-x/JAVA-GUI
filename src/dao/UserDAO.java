@@ -103,21 +103,22 @@ public class UserDAO {
     }
     
     public boolean updateUser(User user) {
-        String sql = "UPDATE users SET first_name = ?, last_name = ?, contact = ?, status = ?, gender = ?, account_id = ?, school_level = ?, address = ?, birthdate = ? WHERE id = ?";
+        String sql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, contact = ?, status = ?, gender = ?, account_id = ?, school_level = ?, address = ?, birthdate = ? WHERE id = ?";
         
         try (Connection conn = config.connectDB();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, user.getFirstName());
             pstmt.setString(2, user.getLastName());
-            pstmt.setString(3, user.getContact());
-            pstmt.setString(4, user.getStatus());
-            pstmt.setString(5, user.getGender());
-            pstmt.setString(6, user.getAccountID());
-            pstmt.setString(7, user.getSchoolLevel());
-            pstmt.setString(8, user.getAddress());
-            pstmt.setString(9, user.getBirthdate());
-            pstmt.setInt(10, user.getId());
+            pstmt.setString(3, user.getEmail());
+            pstmt.setString(4, user.getContact());
+            pstmt.setString(5, user.getStatus());
+            pstmt.setString(6, user.getGender());
+            pstmt.setString(7, user.getAccountID());
+            pstmt.setString(8, user.getSchoolLevel());
+            pstmt.setString(9, user.getAddress());
+            pstmt.setString(10, user.getBirthdate());
+            pstmt.setInt(11, user.getId());
             
             int rowsAffected = pstmt.executeUpdate();
             System.out.println("User updated: " + user.getEmail() + " - Rows affected: " + rowsAffected);
