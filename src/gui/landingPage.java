@@ -6,9 +6,11 @@
 package gui;
 
 import main.login;
+import model.User;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -23,12 +25,35 @@ public class landingPage extends javax.swing.JPanel {
      */
     public landingPage() {
         initComponents();
+        ensureLoggedIn();
+        initializeUserName();
         addEventHandlers();
     }
     
     public void setUserName(String name) {
         this.userName = name;
         jLabel3.setText("Welcome, " + name + "!");
+    }
+    
+    private void ensureLoggedIn() {
+        if (login.getCurrentUser() == null) {
+            // No active session, force user back to login window
+            SwingUtilities.invokeLater(() -> {
+                login log = new login();
+                log.setVisible(true);
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                if (frame != null) {
+                    frame.dispose();
+                }
+            });
+        }
+    }
+    
+    private void initializeUserName() {
+        User user = login.getCurrentUser();
+        if (user != null) {
+            setUserName(user.getFullName());
+        }
     }
     
     private void addEventHandlers() {
@@ -53,6 +78,30 @@ public class landingPage extends javax.swing.JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 // Already on dashboard, do nothing
+            }
+        });
+        
+        // Pre-School navigation from sidebar
+        jLabel13.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openPreschoolPage();
+            }
+        });
+        
+        // Pre-School card click (center card)
+        jLabel25.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openPreschoolPage();
+            }
+        });
+        
+        // Enroll Now click -> go to enrollmentPreSchool
+        enrollNow.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openEnrollmentPreSchool();
             }
         });
     }
@@ -97,6 +146,64 @@ public class landingPage extends javax.swing.JPanel {
         }
     }
 
+    private void redirectToLogin() {
+        login.setCurrentUser(null);
+        login log = new login();
+        log.setVisible(true);
+        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
+    }
+    
+    private void openPreschoolPage() {
+        if (login.getCurrentUser() == null) {
+            redirectToLogin();
+            return;
+        }
+        
+        preschoolPage page = new preschoolPage();
+        
+        JFrame frame = new JFrame("Pre-School");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(page);
+        frame.pack();
+        frame.setSize(1020, 560);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
+        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
+    }
+    
+    private void openEnrollmentPreSchool() {
+        if (login.getCurrentUser() == null) {
+            redirectToLogin();
+            return;
+        }
+        
+        enrollmentPreSchool enrollmentPanel = new enrollmentPreSchool();
+        User user = login.getCurrentUser();
+        if (user != null) {
+            enrollmentPanel.prefillFromUser(user);
+        }
+        
+        JFrame frame = new JFrame("Pre-School Enrollment");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(enrollmentPanel);
+        frame.pack();
+        frame.setSize(1020, 560);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
+        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -123,6 +230,7 @@ public class landingPage extends javax.swing.JPanel {
         jLabel18 = new javax.swing.JLabel();
         profile = new javax.swing.JLabel();
         jLabel20 = new javax.swing.JLabel();
+        enrollNow = new javax.swing.JLabel();
         jLabel21 = new javax.swing.JLabel();
         jLabel22 = new javax.swing.JLabel();
         jLabel23 = new javax.swing.JLabel();
@@ -230,6 +338,10 @@ public class landingPage extends javax.swing.JPanel {
         jLabel20.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel20.setText("Logout");
 
+        enrollNow.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        enrollNow.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        enrollNow.setText("Enroll Now");
+
         javax.swing.GroupLayout panelRound2Layout = new javax.swing.GroupLayout(panelRound2);
         panelRound2.setLayout(panelRound2Layout);
         panelRound2Layout.setHorizontalGroup(
@@ -243,6 +355,7 @@ public class landingPage extends javax.swing.JPanel {
             .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
             .addComponent(profile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jLabel20, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(enrollNow, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         panelRound2Layout.setVerticalGroup(
             panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -261,9 +374,11 @@ public class landingPage extends javax.swing.JPanel {
                 .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(enrollNow, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(profile, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 44, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(21, 21, 21))
         );
@@ -332,6 +447,7 @@ public class landingPage extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel enrollNow;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;

@@ -223,4 +223,45 @@ public class UserDAO {
         
         return users;
     }
+
+    public boolean updateUserAdmin(User user) {
+        String sql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ?, contact = ?, status = ?, gender = ?, account_id = ?, school_level = ?, address = ?, birthdate = ? WHERE id = ?";
+        try (Connection conn = config.connectDB();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, user.getFirstName());
+            pstmt.setString(2, user.getLastName());
+            pstmt.setString(3, user.getEmail());
+            pstmt.setString(4, user.getRole());
+            pstmt.setString(5, user.getContact());
+            pstmt.setString(6, user.getStatus());
+            pstmt.setString(7, user.getGender());
+            pstmt.setString(8, user.getAccountID());
+            pstmt.setString(9, user.getSchoolLevel());
+            pstmt.setString(10, user.getAddress());
+            pstmt.setString(11, user.getBirthdate());
+            pstmt.setInt(12, user.getId());
+            
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating user (admin): " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public boolean deleteUserById(int id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        try (Connection conn = config.connectDB();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting user: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

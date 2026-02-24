@@ -30,6 +30,7 @@ public class adminDashPane extends javax.swing.JPanel {
     /** Creates new form adminDashPane */
     public adminDashPane() {
         initComponents();
+        ensureLoggedIn();
         enrollmentDAO = new EnrollmentDAO();
         userDAO = new UserDAO();
         // Update counts after component is fully initialized
@@ -38,6 +39,19 @@ public class adminDashPane extends javax.swing.JPanel {
             showDashboard(); // Show dashboard view by default
         });
         addEventHandlers();
+    }
+    
+    private void ensureLoggedIn() {
+        if (login.getCurrentUser() == null) {
+            SwingUtilities.invokeLater(() -> {
+                login log = new login();
+                log.setVisible(true);
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                if (frame != null) {
+                    frame.dispose();
+                }
+            });
+        }
     }
     
     private void addEventHandlers() {
@@ -69,7 +83,15 @@ public class adminDashPane extends javax.swing.JPanel {
         jLabel11.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                showUserManagement();
+                openUserManagement();
+            }
+        });
+        
+        // Masterlist click handler
+        Masterlist.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                openMasterlist();
             }
         });
         
@@ -88,7 +110,7 @@ public class adminDashPane extends javax.swing.JPanel {
         });
     }
     
-    private void showDashboard() {
+    public void showDashboard() {
         // Refresh counts and show default dashboard view
         updateCounts();
         jLabel3.setText("Total Applicants: " + (enrollmentDAO.getTotalApplicants() > 0 ? enrollmentDAO.getTotalApplicants() : enrollmentDAO.getTotalStudents()));
@@ -106,7 +128,7 @@ public class adminDashPane extends javax.swing.JPanel {
         jTable1.setModel(model);
     }
     
-    private void showEnrollmentManagement() {
+    public void showEnrollmentManagement() {
         try {
             // Get enrollment applications
             List<java.util.Map<String, Object>> enrollments = enrollmentDAO.getAllEnrollments();
@@ -138,7 +160,7 @@ public class adminDashPane extends javax.swing.JPanel {
         }
     }
     
-    private void showFinancials() {
+    public void showFinancials() {
         // Placeholder for financials - can be expanded later
         DefaultTableModel model = new DefaultTableModel(
             new Object[][]{},
@@ -154,7 +176,7 @@ public class adminDashPane extends javax.swing.JPanel {
         jLabel6.setText("Total Revenue: $0.00");
     }
     
-    private void showUserManagement() {
+    public void showUserManagement() {
         try {
             List<java.util.Map<String, Object>> users = userDAO.getAllUsers();
             
@@ -293,6 +315,27 @@ public class adminDashPane extends javax.swing.JPanel {
         }
     }
     
+    private void openUserManagement() {
+        if (login.getCurrentUser() == null) {
+            ensureLoggedIn();
+            return;
+        }
+        
+        userManagement panel = new userManagement();
+        JFrame frame = new JFrame("User Management");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(panel);
+        frame.pack();
+        frame.setSize(1020, 560);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
+        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
+    }
+    
     private void performLogout() {
         int confirm = JOptionPane.showConfirmDialog(
             this,
@@ -308,6 +351,32 @@ public class adminDashPane extends javax.swing.JPanel {
             if (currentFrame != null) {
                 currentFrame.dispose();
             }
+        }
+    }
+    
+    private void openMasterlist() {
+        if (login.getCurrentUser() == null) {
+            login log = new login();
+            log.setVisible(true);
+            JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+            if (currentFrame != null) {
+                currentFrame.dispose();
+            }
+            return;
+        }
+        
+        masterlist panel = new masterlist();
+        JFrame frame = new JFrame("Masterlist");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(panel);
+        frame.pack();
+        frame.setSize(1020, 560);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
+        JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (currentFrame != null) {
+            currentFrame.dispose();
         }
     }
 
@@ -337,6 +406,7 @@ public class adminDashPane extends javax.swing.JPanel {
         jLabel11 = new javax.swing.JLabel();
         profile = new javax.swing.JLabel();
         logout1 = new javax.swing.JLabel();
+        Masterlist = new javax.swing.JLabel();
         panelRound3 = new onlineenrollment.main.PanelRound();
         jLabel3 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -471,6 +541,10 @@ public class adminDashPane extends javax.swing.JPanel {
         logout1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         logout1.setText("Logout");
 
+        Masterlist.setFont(new java.awt.Font("Trebuchet MS", 0, 14)); // NOI18N
+        Masterlist.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        Masterlist.setText("Masterlist");
+
         javax.swing.GroupLayout panelRound2Layout = new javax.swing.GroupLayout(panelRound2);
         panelRound2.setLayout(panelRound2Layout);
         panelRound2Layout.setHorizontalGroup(
@@ -482,10 +556,11 @@ public class adminDashPane extends javax.swing.JPanel {
             .addGroup(panelRound2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(panelRound2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(profile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(logout1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(panelRound2Layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(logout1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(profile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(Masterlist, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         panelRound2Layout.setVerticalGroup(
@@ -501,9 +576,11 @@ public class adminDashPane extends javax.swing.JPanel {
                 .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(profile, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(37, 37, 37)
+                .addComponent(Masterlist, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addComponent(logout1, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(175, Short.MAX_VALUE))
+                .addGap(64, 64, 64))
         );
 
         jPanel1.add(panelRound2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, 150, 460));
@@ -641,6 +718,7 @@ public class adminDashPane extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel Masterlist;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
