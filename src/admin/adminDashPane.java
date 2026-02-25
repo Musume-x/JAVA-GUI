@@ -133,15 +133,18 @@ public class adminDashPane extends javax.swing.JPanel {
             // Get enrollment applications
             List<java.util.Map<String, Object>> enrollments = enrollmentDAO.getAllEnrollments();
             
-            String[] columnNames = {"ID", "User ID", "Status", "Created At"};
-            Object[][] data = new Object[enrollments.size()][4];
+            String[] columnNames = {"ID", "User ID", "Full Name", "Program", "Level", "Status", "Created At"};
+            Object[][] data = new Object[enrollments.size()][7];
             
             for (int i = 0; i < enrollments.size(); i++) {
                 java.util.Map<String, Object> enrollment = enrollments.get(i);
                 data[i][0] = enrollment.get("id");
                 data[i][1] = enrollment.get("user_id");
-                data[i][2] = enrollment.get("status");
-                data[i][3] = enrollment.get("created_at") != null ? enrollment.get("created_at").toString() : "";
+                data[i][2] = enrollment.get("full_name") != null ? enrollment.get("full_name").toString() : "";
+                data[i][3] = enrollment.get("program") != null ? enrollment.get("program").toString() : "";
+                data[i][4] = enrollment.get("level") != null ? enrollment.get("level").toString() : "";
+                data[i][5] = enrollment.get("status");
+                data[i][6] = enrollment.get("created_at") != null ? enrollment.get("created_at").toString() : "";
             }
             
             DefaultTableModel model = new DefaultTableModel(data, columnNames) {

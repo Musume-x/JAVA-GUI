@@ -79,11 +79,58 @@ public class config {
             String createApplicationsTable = "CREATE TABLE IF NOT EXISTS enrollment_applications (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "user_id INTEGER NOT NULL," +
+                    "program TEXT DEFAULT 'preschool'," +
+                    "level TEXT," +
                     "status TEXT DEFAULT 'pending'," +
                     "created_at DATETIME DEFAULT CURRENT_TIMESTAMP," +
                     "FOREIGN KEY (user_id) REFERENCES users(id)" +
                     ")";
             stmt.execute(createApplicationsTable);
+            
+            // Add columns to enrollment_applications if they don't exist
+            try { stmt.execute("ALTER TABLE enrollment_applications ADD COLUMN program TEXT"); } catch (SQLException e) {}
+            try { stmt.execute("ALTER TABLE enrollment_applications ADD COLUMN level TEXT"); } catch (SQLException e) {}
+            
+            // Masterlist tables
+            String createSubjectsTable = "CREATE TABLE IF NOT EXISTS subjects_masterlist (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "subject_code TEXT UNIQUE," +
+                    "subject_name TEXT NOT NULL," +
+                    "units INTEGER DEFAULT 0," +
+                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+            stmt.execute(createSubjectsTable);
+            
+            String createCoursesTable = "CREATE TABLE IF NOT EXISTS courses_masterlist (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "course_code TEXT UNIQUE," +
+                    "course_name TEXT NOT NULL," +
+                    "level TEXT," +
+                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+            stmt.execute(createCoursesTable);
+            
+            String createSectionsTable = "CREATE TABLE IF NOT EXISTS sections_masterlist (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "section_name TEXT UNIQUE," +
+                    "adviser TEXT," +
+                    "room TEXT," +
+                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+            stmt.execute(createSectionsTable);
+            
+            // Preschool enrollments (details)
+            String createPreschoolEnrollments = "CREATE TABLE IF NOT EXISTS preschool_enrollments (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "user_id INTEGER NOT NULL UNIQUE," +
+                    "full_name TEXT," +
+                    "birthdate TEXT," +
+                    "contact_no TEXT," +
+                    "kinder_level TEXT," +
+                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP," +
+                    "FOREIGN KEY (user_id) REFERENCES users(id)" +
+                    ")";
+            stmt.execute(createPreschoolEnrollments);
             
         } catch (SQLException e) {
             System.err.println("Error initializing database: " + e.getMessage());

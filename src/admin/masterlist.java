@@ -6,6 +6,7 @@
 package admin;
 
 import dao.UserDAO;
+import dao.MasterlistDAO;
 import main.login;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -27,6 +28,7 @@ import java.util.List;
 public class masterlist extends javax.swing.JPanel {
     
     private final UserDAO userDAO = new UserDAO();
+    private final MasterlistDAO masterlistDAO = new MasterlistDAO();
     private TableRowSorter<DefaultTableModel> studentSorter;
     private TableRowSorter<DefaultTableModel> courseSorter;
     private TableRowSorter<DefaultTableModel> subjectSorter;
@@ -40,6 +42,9 @@ public class masterlist extends javax.swing.JPanel {
         ensureLoggedIn();
         initTableModels();
         loadStudentsOnly();
+        loadSubjects();
+        loadCourses();
+        loadSections();
         setupSearchFiltering();
         addEventHandlers();
     }
@@ -92,6 +97,45 @@ public class masterlist extends javax.swing.JPanel {
         sectionMasterlist.setModel(sections);
         sectionSorter = new TableRowSorter<>(sections);
         sectionMasterlist.setRowSorter(sectionSorter);
+    }
+    
+    private void loadSubjects() {
+        DefaultTableModel model = (DefaultTableModel) subjectMasterlist.getModel();
+        model.setRowCount(0);
+        for (java.util.Map<String, Object> r : masterlistDAO.getAllSubjects()) {
+            model.addRow(new Object[]{
+                r.get("id"),
+                r.get("subject_code"),
+                r.get("subject_name"),
+                r.get("units")
+            });
+        }
+    }
+    
+    private void loadCourses() {
+        DefaultTableModel model = (DefaultTableModel) courseMasterlist.getModel();
+        model.setRowCount(0);
+        for (java.util.Map<String, Object> r : masterlistDAO.getAllCourses()) {
+            model.addRow(new Object[]{
+                r.get("id"),
+                r.get("course_code"),
+                r.get("course_name"),
+                r.get("level")
+            });
+        }
+    }
+    
+    private void loadSections() {
+        DefaultTableModel model = (DefaultTableModel) sectionMasterlist.getModel();
+        model.setRowCount(0);
+        for (java.util.Map<String, Object> r : masterlistDAO.getAllSections()) {
+            model.addRow(new Object[]{
+                r.get("id"),
+                r.get("section_name"),
+                r.get("adviser"),
+                r.get("room")
+            });
+        }
     }
     
     private void loadStudentsOnly() {
@@ -261,7 +305,7 @@ public class masterlist extends javax.swing.JPanel {
         );
         if (tableChoice < 0) return;
         
-        String[] actions = {"Add Row", "Edit Selected Row", "Delete Selected Row"};
+        String[] actions = {"Add", "Edit Selected", "Delete Selected"};
         int action = JOptionPane.showOptionDialog(
             this,
             "Select an action",
@@ -274,31 +318,151 @@ public class masterlist extends javax.swing.JPanel {
         );
         if (action < 0) return;
         
-        javax.swing.JTable table = getTableByChoice(tableChoice);
-        if (table == null) return;
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        
+        if (tableChoice == 0) {
+            crudSubjects(action);
+        } else if (tableChoice == 1) {
+            crudCourses(action);
+        } else if (tableChoice == 2) {
+            crudSections(action);
+        }
+    }
+    
+    private void crudSubjects(int action) {
         if (action == 0) {
-            model.addRow(new Object[]{null, null, null, null});
-        } else if (action == 1) {
-            int viewRow = table.getSelectedRow();
-            if (viewRow < 0) {
-                JOptionPane.showMessageDialog(this, "Select a row first.");
-                return;
+            String code = JOptionPane.showInputDialog(this, "Subject Code:");
+            if (code == null) return;
+            String name = JOptionPane.showInputDialog(this, "Subject Name:");
+            if (name == null) return;
+            String unitsStr = JOptionPane.showInputDialog(this, "Units:", "0");
+            if (unitsStr == null) return;
+            int units = 0;
+            try { units = Integer.parseInt(unitsStr.trim()); } catch (Exception e) {}
+            if (!masterlistDAO.addSubject(code.trim(), name.trim(), units)) {
+                JOptionPane.showMessageDialog(this, "Failed to add subject.");
             }
-            int viewCol = Math.max(0, table.getSelectedColumn());
-            table.editCellAt(viewRow, viewCol);
-            table.requestFocusInWindow();
+            loadSubjects();
+            return;
+        }
+        
+        int viewRow = subjectMasterlist.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select a subject row first.");
+            return;
+        }
+        int modelRow = subjectMasterlist.convertRowIndexToModel(viewRow);
+        DefaultTableModel model = (DefaultTableModel) subjectMasterlist.getModel();
+        int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+        
+        if (action == 1) {
+            String code = JOptionPane.showInputDialog(this, "Subject Code:", model.getValueAt(modelRow, 1));
+            if (code == null) return;
+            String name = JOptionPane.showInputDialog(this, "Subject Name:", model.getValueAt(modelRow, 2));
+            if (name == null) return;
+            String unitsStr = JOptionPane.showInputDialog(this, "Units:", model.getValueAt(modelRow, 3));
+            if (unitsStr == null) return;
+            int units = 0;
+            try { units = Integer.parseInt(unitsStr.trim()); } catch (Exception e) {}
+            if (!masterlistDAO.updateSubject(id, code.trim(), name.trim(), units)) {
+                JOptionPane.showMessageDialog(this, "Failed to update subject.");
+            }
+            loadSubjects();
         } else if (action == 2) {
-            int viewRow = table.getSelectedRow();
-            if (viewRow < 0) {
-                JOptionPane.showMessageDialog(this, "Select a row first.");
-                return;
-            }
-            int modelRow = table.convertRowIndexToModel(viewRow);
-            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected row?", "Confirm", JOptionPane.YES_NO_OPTION);
+            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected subject?", "Confirm", JOptionPane.YES_NO_OPTION);
             if (confirm != JOptionPane.YES_OPTION) return;
-            model.removeRow(modelRow);
+            if (!masterlistDAO.deleteSubject(id)) {
+                JOptionPane.showMessageDialog(this, "Failed to delete subject.");
+            }
+            loadSubjects();
+        }
+    }
+    
+    private void crudCourses(int action) {
+        if (action == 0) {
+            String code = JOptionPane.showInputDialog(this, "Course Code:");
+            if (code == null) return;
+            String name = JOptionPane.showInputDialog(this, "Course Name:");
+            if (name == null) return;
+            String level = JOptionPane.showInputDialog(this, "Level:", "");
+            if (level == null) return;
+            if (!masterlistDAO.addCourse(code.trim(), name.trim(), level.trim())) {
+                JOptionPane.showMessageDialog(this, "Failed to add course.");
+            }
+            loadCourses();
+            return;
+        }
+        
+        int viewRow = courseMasterlist.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select a course row first.");
+            return;
+        }
+        int modelRow = courseMasterlist.convertRowIndexToModel(viewRow);
+        DefaultTableModel model = (DefaultTableModel) courseMasterlist.getModel();
+        int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+        
+        if (action == 1) {
+            String code = JOptionPane.showInputDialog(this, "Course Code:", model.getValueAt(modelRow, 1));
+            if (code == null) return;
+            String name = JOptionPane.showInputDialog(this, "Course Name:", model.getValueAt(modelRow, 2));
+            if (name == null) return;
+            String level = JOptionPane.showInputDialog(this, "Level:", model.getValueAt(modelRow, 3));
+            if (level == null) return;
+            if (!masterlistDAO.updateCourse(id, code.trim(), name.trim(), level.trim())) {
+                JOptionPane.showMessageDialog(this, "Failed to update course.");
+            }
+            loadCourses();
+        } else if (action == 2) {
+            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected course?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            if (!masterlistDAO.deleteCourse(id)) {
+                JOptionPane.showMessageDialog(this, "Failed to delete course.");
+            }
+            loadCourses();
+        }
+    }
+    
+    private void crudSections(int action) {
+        if (action == 0) {
+            String name = JOptionPane.showInputDialog(this, "Section Name:");
+            if (name == null) return;
+            String adviser = JOptionPane.showInputDialog(this, "Adviser:", "");
+            if (adviser == null) return;
+            String room = JOptionPane.showInputDialog(this, "Room:", "");
+            if (room == null) return;
+            if (!masterlistDAO.addSection(name.trim(), adviser.trim(), room.trim())) {
+                JOptionPane.showMessageDialog(this, "Failed to add section.");
+            }
+            loadSections();
+            return;
+        }
+        
+        int viewRow = sectionMasterlist.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select a section row first.");
+            return;
+        }
+        int modelRow = sectionMasterlist.convertRowIndexToModel(viewRow);
+        DefaultTableModel model = (DefaultTableModel) sectionMasterlist.getModel();
+        int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+        
+        if (action == 1) {
+            String name = JOptionPane.showInputDialog(this, "Section Name:", model.getValueAt(modelRow, 1));
+            if (name == null) return;
+            String adviser = JOptionPane.showInputDialog(this, "Adviser:", model.getValueAt(modelRow, 2));
+            if (adviser == null) return;
+            String room = JOptionPane.showInputDialog(this, "Room:", model.getValueAt(modelRow, 3));
+            if (room == null) return;
+            if (!masterlistDAO.updateSection(id, name.trim(), adviser.trim(), room.trim())) {
+                JOptionPane.showMessageDialog(this, "Failed to update section.");
+            }
+            loadSections();
+        } else if (action == 2) {
+            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected section?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            if (!masterlistDAO.deleteSection(id)) {
+                JOptionPane.showMessageDialog(this, "Failed to delete section.");
+            }
+            loadSections();
         }
     }
     
