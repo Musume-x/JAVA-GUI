@@ -29,6 +29,13 @@ public class landingPage extends javax.swing.JPanel {
         initializeUserName();
         addEventHandlers();
     }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            // Always go through login first (required login)
+            new login().setVisible(true);
+        });
+    }
     
     public void setUserName(String name) {
         this.userName = name;

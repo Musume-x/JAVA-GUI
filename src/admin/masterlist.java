@@ -8,12 +8,25 @@ package admin;
 import dao.UserDAO;
 import dao.MasterlistDAO;
 import main.login;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.function.Consumer;
 import javax.swing.JFrame;
+import javax.swing.JDialog;
+import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.RowFilter;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.event.DocumentEvent;
@@ -33,6 +46,7 @@ public class masterlist extends javax.swing.JPanel {
     private TableRowSorter<DefaultTableModel> courseSorter;
     private TableRowSorter<DefaultTableModel> subjectSorter;
     private TableRowSorter<DefaultTableModel> sectionSorter;
+    private JDialog crudDialog;
 
     /**
      * Creates new form masterlist
@@ -42,11 +56,17 @@ public class masterlist extends javax.swing.JPanel {
         ensureLoggedIn();
         initTableModels();
         loadStudentsOnly();
-        loadSubjects();
-        loadCourses();
-        loadSections();
+        loadSubjectsFromDb();
+        loadCoursesFromDb();
+        loadSectionsFromDb();
         setupSearchFiltering();
         addEventHandlers();
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new main.login().setVisible(true);
+        });
     }
 
     private void ensureLoggedIn() {
@@ -99,45 +119,6 @@ public class masterlist extends javax.swing.JPanel {
         sectionMasterlist.setRowSorter(sectionSorter);
     }
     
-    private void loadSubjects() {
-        DefaultTableModel model = (DefaultTableModel) subjectMasterlist.getModel();
-        model.setRowCount(0);
-        for (java.util.Map<String, Object> r : masterlistDAO.getAllSubjects()) {
-            model.addRow(new Object[]{
-                r.get("id"),
-                r.get("subject_code"),
-                r.get("subject_name"),
-                r.get("units")
-            });
-        }
-    }
-    
-    private void loadCourses() {
-        DefaultTableModel model = (DefaultTableModel) courseMasterlist.getModel();
-        model.setRowCount(0);
-        for (java.util.Map<String, Object> r : masterlistDAO.getAllCourses()) {
-            model.addRow(new Object[]{
-                r.get("id"),
-                r.get("course_code"),
-                r.get("course_name"),
-                r.get("level")
-            });
-        }
-    }
-    
-    private void loadSections() {
-        DefaultTableModel model = (DefaultTableModel) sectionMasterlist.getModel();
-        model.setRowCount(0);
-        for (java.util.Map<String, Object> r : masterlistDAO.getAllSections()) {
-            model.addRow(new Object[]{
-                r.get("id"),
-                r.get("section_name"),
-                r.get("adviser"),
-                r.get("room")
-            });
-        }
-    }
-    
     private void loadStudentsOnly() {
         try {
             List<java.util.Map<String, Object>> users = userDAO.getAllUsers();
@@ -161,6 +142,60 @@ public class masterlist extends javax.swing.JPanel {
             }
         } catch (Exception e) {
             System.err.println("Error loading students in masterlist: " + e.getMessage());
+        }
+    }
+    
+    private void loadSubjectsFromDb() {
+        try {
+            List<java.util.Map<String, Object>> rows = masterlistDAO.getAllSubjects();
+            DefaultTableModel model = (DefaultTableModel) subjectMasterlist.getModel();
+            model.setRowCount(0);
+            for (java.util.Map<String, Object> r : rows) {
+                model.addRow(new Object[]{
+                    r.get("id"),
+                    r.get("subject_code"),
+                    r.get("subject_name"),
+                    r.get("units")
+                });
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading subjects into table: " + e.getMessage());
+        }
+    }
+    
+    private void loadCoursesFromDb() {
+        try {
+            List<java.util.Map<String, Object>> rows = masterlistDAO.getAllCourses();
+            DefaultTableModel model = (DefaultTableModel) courseMasterlist.getModel();
+            model.setRowCount(0);
+            for (java.util.Map<String, Object> r : rows) {
+                model.addRow(new Object[]{
+                    r.get("id"),
+                    r.get("course_code"),
+                    r.get("course_name"),
+                    r.get("level")
+                });
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading courses into table: " + e.getMessage());
+        }
+    }
+    
+    private void loadSectionsFromDb() {
+        try {
+            List<java.util.Map<String, Object>> rows = masterlistDAO.getAllSections();
+            DefaultTableModel model = (DefaultTableModel) sectionMasterlist.getModel();
+            model.setRowCount(0);
+            for (java.util.Map<String, Object> r : rows) {
+                model.addRow(new Object[]{
+                    r.get("id"),
+                    r.get("section_name"),
+                    r.get("adviser"),
+                    r.get("room")
+                });
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading sections into table: " + e.getMessage());
         }
     }
     
@@ -292,178 +327,438 @@ public class masterlist extends javax.swing.JPanel {
     }
     
     private void openCrudDialog() {
-        String[] tables = {"Subject Masterlist", "Course Masterlist", "Section Masterlist"};
-        int tableChoice = JOptionPane.showOptionDialog(
-            this,
-            "Select a masterlist",
-            "Edit Masterlist",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.PLAIN_MESSAGE,
-            null,
-            tables,
-            tables[0]
-        );
-        if (tableChoice < 0) return;
-        
-        String[] actions = {"Add", "Edit Selected", "Delete Selected"};
-        int action = JOptionPane.showOptionDialog(
-            this,
-            "Select an action",
-            "Edit Masterlist",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.PLAIN_MESSAGE,
-            null,
-            actions,
-            actions[0]
-        );
-        if (action < 0) return;
-        
-        if (tableChoice == 0) {
-            crudSubjects(action);
-        } else if (tableChoice == 1) {
-            crudCourses(action);
-        } else if (tableChoice == 2) {
-            crudSections(action);
-        }
+        openCrudWindow();
     }
-    
-    private void crudSubjects(int action) {
-        if (action == 0) {
-            String code = JOptionPane.showInputDialog(this, "Subject Code:");
-            if (code == null) return;
-            String name = JOptionPane.showInputDialog(this, "Subject Name:");
-            if (name == null) return;
-            String unitsStr = JOptionPane.showInputDialog(this, "Units:", "0");
-            if (unitsStr == null) return;
-            int units = 0;
-            try { units = Integer.parseInt(unitsStr.trim()); } catch (Exception e) {}
-            if (!masterlistDAO.addSubject(code.trim(), name.trim(), units)) {
-                JOptionPane.showMessageDialog(this, "Failed to add subject.");
-            }
-            loadSubjects();
+
+    private void openCrudWindow() {
+        if (crudDialog != null && crudDialog.isShowing()) {
+            crudDialog.toFront();
             return;
         }
-        
-        int viewRow = subjectMasterlist.getSelectedRow();
-        if (viewRow < 0) {
-            JOptionPane.showMessageDialog(this, "Select a subject row first.");
+        if (login.getCurrentUser() == null) {
+            ensureLoggedIn();
             return;
         }
-        int modelRow = subjectMasterlist.convertRowIndexToModel(viewRow);
-        DefaultTableModel model = (DefaultTableModel) subjectMasterlist.getModel();
-        int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
-        
-        if (action == 1) {
-            String code = JOptionPane.showInputDialog(this, "Subject Code:", model.getValueAt(modelRow, 1));
-            if (code == null) return;
-            String name = JOptionPane.showInputDialog(this, "Subject Name:", model.getValueAt(modelRow, 2));
-            if (name == null) return;
-            String unitsStr = JOptionPane.showInputDialog(this, "Units:", model.getValueAt(modelRow, 3));
-            if (unitsStr == null) return;
-            int units = 0;
-            try { units = Integer.parseInt(unitsStr.trim()); } catch (Exception e) {}
-            if (!masterlistDAO.updateSubject(id, code.trim(), name.trim(), units)) {
-                JOptionPane.showMessageDialog(this, "Failed to update subject.");
-            }
-            loadSubjects();
-        } else if (action == 2) {
-            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected subject?", "Confirm", JOptionPane.YES_NO_OPTION);
-            if (confirm != JOptionPane.YES_OPTION) return;
-            if (!masterlistDAO.deleteSubject(id)) {
-                JOptionPane.showMessageDialog(this, "Failed to delete subject.");
-            }
-            loadSubjects();
-        }
+
+        JFrame owner = (JFrame) SwingUtilities.getWindowAncestor(this);
+        crudDialog = new JDialog(owner, "Masterlist - CRUD", true);
+        crudDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        crudDialog.setSize(new Dimension(980, 560));
+        crudDialog.setLocationRelativeTo(owner);
+
+        JTabbedPane tabs = new JTabbedPane();
+
+        tabs.addTab("Subjects", buildSubjectsCrudTab());
+        tabs.addTab("Courses", buildCoursesCrudTab());
+        tabs.addTab("Sections", buildSectionsCrudTab());
+
+        JButton closeBtn = new JButton("Close");
+        closeBtn.addActionListener(e -> crudDialog.dispose());
+        JPanel bottom = new JPanel();
+        bottom.add(closeBtn);
+
+        JPanel root = new JPanel(new BorderLayout());
+        root.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        root.add(tabs, BorderLayout.CENTER);
+        root.add(bottom, BorderLayout.SOUTH);
+
+        crudDialog.setContentPane(root);
+        crudDialog.setVisible(true);
     }
-    
-    private void crudCourses(int action) {
-        if (action == 0) {
-            String code = JOptionPane.showInputDialog(this, "Course Code:");
-            if (code == null) return;
-            String name = JOptionPane.showInputDialog(this, "Course Name:");
-            if (name == null) return;
-            String level = JOptionPane.showInputDialog(this, "Level:", "");
-            if (level == null) return;
-            if (!masterlistDAO.addCourse(code.trim(), name.trim(), level.trim())) {
-                JOptionPane.showMessageDialog(this, "Failed to add course.");
+
+    private JPanel buildSubjectsCrudTab() {
+        // Table
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[][]{},
+            new String[]{"ID", "Subject Code", "Subject Name", "Units"}
+        ) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        javax.swing.JTable table = new javax.swing.JTable(model);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+        JScrollPane scroll = new JScrollPane(table);
+
+        // Search
+        JTextField search = new JTextField();
+        hookFilter(search, sorter);
+
+        // Form
+        JTextField id = new JTextField(); id.setEnabled(false);
+        JTextField code = new JTextField();
+        JTextField name = new JTextField();
+        JTextField units = new JTextField();
+
+        Consumer<Void> reload = (v) -> {
+            try {
+                List<java.util.Map<String, Object>> rows = masterlistDAO.getAllSubjects();
+                model.setRowCount(0);
+                for (java.util.Map<String, Object> r : rows) {
+                    model.addRow(new Object[]{r.get("id"), r.get("subject_code"), r.get("subject_name"), r.get("units")});
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(crudDialog, "Failed to load subjects.");
             }
-            loadCourses();
-            return;
-        }
-        
-        int viewRow = courseMasterlist.getSelectedRow();
-        if (viewRow < 0) {
-            JOptionPane.showMessageDialog(this, "Select a course row first.");
-            return;
-        }
-        int modelRow = courseMasterlist.convertRowIndexToModel(viewRow);
-        DefaultTableModel model = (DefaultTableModel) courseMasterlist.getModel();
-        int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
-        
-        if (action == 1) {
-            String code = JOptionPane.showInputDialog(this, "Course Code:", model.getValueAt(modelRow, 1));
-            if (code == null) return;
-            String name = JOptionPane.showInputDialog(this, "Course Name:", model.getValueAt(modelRow, 2));
-            if (name == null) return;
-            String level = JOptionPane.showInputDialog(this, "Level:", model.getValueAt(modelRow, 3));
-            if (level == null) return;
-            if (!masterlistDAO.updateCourse(id, code.trim(), name.trim(), level.trim())) {
-                JOptionPane.showMessageDialog(this, "Failed to update course.");
+        };
+        reload.accept(null);
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            int viewRow = table.getSelectedRow();
+            if (viewRow < 0) return;
+            int mr = table.convertRowIndexToModel(viewRow);
+            id.setText(String.valueOf(model.getValueAt(mr, 0)));
+            code.setText(String.valueOf(model.getValueAt(mr, 1)));
+            name.setText(String.valueOf(model.getValueAt(mr, 2)));
+            units.setText(String.valueOf(model.getValueAt(mr, 3)));
+        });
+
+        JButton add = new JButton("Add");
+        JButton update = new JButton("Update");
+        JButton delete = new JButton("Delete");
+        JButton refresh = new JButton("Refresh");
+        JButton clear = new JButton("Clear");
+
+        Runnable clearForm = () -> { id.setText(""); code.setText(""); name.setText(""); units.setText(""); table.clearSelection(); };
+
+        add.addActionListener(e -> {
+            String c = code.getText().trim();
+            String n = name.getText().trim();
+            String u = units.getText().trim();
+            if (c.isEmpty() || n.isEmpty()) {
+                JOptionPane.showMessageDialog(crudDialog, "Fill subject code and name.");
+                return;
             }
-            loadCourses();
-        } else if (action == 2) {
-            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected course?", "Confirm", JOptionPane.YES_NO_OPTION);
+            int uVal = 0;
+            if (!u.isEmpty()) {
+                try { uVal = Integer.parseInt(u); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(crudDialog, "Units must be a number."); return; }
+            }
+            boolean ok = masterlistDAO.addSubject(c, n, uVal);
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Add failed (code may already exist).");
+            reload.accept(null);
+            clearForm.run();
+            loadSubjectsFromDb();
+        });
+
+        update.addActionListener(e -> {
+            if (id.getText().trim().isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Select a subject row."); return; }
+            int idVal;
+            try { idVal = Integer.parseInt(id.getText().trim()); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(crudDialog, "Invalid ID."); return; }
+            String c = code.getText().trim();
+            String n = name.getText().trim();
+            String u = units.getText().trim();
+            if (c.isEmpty() || n.isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Fill subject code and name."); return; }
+            int uVal = 0;
+            if (!u.isEmpty()) {
+                try { uVal = Integer.parseInt(u); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(crudDialog, "Units must be a number."); return; }
+            }
+            boolean ok = masterlistDAO.updateSubject(idVal, c, n, uVal);
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Update failed.");
+            reload.accept(null);
+            loadSubjectsFromDb();
+        });
+
+        delete.addActionListener(e -> {
+            if (id.getText().trim().isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Select a subject row."); return; }
+            int confirm = JOptionPane.showConfirmDialog(crudDialog, "Delete selected subject?", "Confirm", JOptionPane.YES_NO_OPTION);
             if (confirm != JOptionPane.YES_OPTION) return;
-            if (!masterlistDAO.deleteCourse(id)) {
-                JOptionPane.showMessageDialog(this, "Failed to delete course.");
-            }
-            loadCourses();
-        }
+            int idVal;
+            try { idVal = Integer.parseInt(id.getText().trim()); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(crudDialog, "Invalid ID."); return; }
+            boolean ok = masterlistDAO.deleteSubject(idVal);
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Delete failed.");
+            reload.accept(null);
+            clearForm.run();
+            loadSubjectsFromDb();
+        });
+
+        refresh.addActionListener(e -> { reload.accept(null); });
+        clear.addActionListener(e -> { clearForm.run(); });
+
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        int r = 0;
+        addFormRow(form, gbc, r++, "ID", id);
+        addFormRow(form, gbc, r++, "Subject Code", code);
+        addFormRow(form, gbc, r++, "Subject Name", name);
+        addFormRow(form, gbc, r++, "Units", units);
+
+        JPanel btns = new JPanel();
+        btns.add(add); btns.add(update); btns.add(delete); btns.add(refresh); btns.add(clear);
+
+        JPanel right = new JPanel(new BorderLayout(8, 8));
+        right.add(form, BorderLayout.CENTER);
+        right.add(btns, BorderLayout.SOUTH);
+
+        JPanel top = new JPanel(new BorderLayout(8, 8));
+        top.add(new JLabel("Search:"), BorderLayout.WEST);
+        top.add(search, BorderLayout.CENTER);
+
+        JPanel left = new JPanel(new BorderLayout(8, 8));
+        left.add(top, BorderLayout.NORTH);
+        left.add(scroll, BorderLayout.CENTER);
+
+        JPanel tab = new JPanel(new BorderLayout(10, 10));
+        tab.add(left, BorderLayout.CENTER);
+        tab.add(right, BorderLayout.EAST);
+        return tab;
     }
-    
-    private void crudSections(int action) {
-        if (action == 0) {
-            String name = JOptionPane.showInputDialog(this, "Section Name:");
-            if (name == null) return;
-            String adviser = JOptionPane.showInputDialog(this, "Adviser:", "");
-            if (adviser == null) return;
-            String room = JOptionPane.showInputDialog(this, "Room:", "");
-            if (room == null) return;
-            if (!masterlistDAO.addSection(name.trim(), adviser.trim(), room.trim())) {
-                JOptionPane.showMessageDialog(this, "Failed to add section.");
+
+    private JPanel buildCoursesCrudTab() {
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[][]{},
+            new String[]{"ID", "Course Code", "Course Name", "Level"}
+        ) { @Override public boolean isCellEditable(int r, int c) { return false; } };
+        javax.swing.JTable table = new javax.swing.JTable(model);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+        JScrollPane scroll = new JScrollPane(table);
+
+        JTextField search = new JTextField();
+        hookFilter(search, sorter);
+
+        JTextField id = new JTextField(); id.setEnabled(false);
+        JTextField code = new JTextField();
+        JTextField name = new JTextField();
+        JTextField level = new JTextField();
+
+        Runnable reload = () -> {
+            try {
+                List<java.util.Map<String, Object>> rows = masterlistDAO.getAllCourses();
+                model.setRowCount(0);
+                for (java.util.Map<String, Object> r : rows) {
+                    model.addRow(new Object[]{r.get("id"), r.get("course_code"), r.get("course_name"), r.get("level")});
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(crudDialog, "Failed to load courses.");
             }
-            loadSections();
-            return;
-        }
-        
-        int viewRow = sectionMasterlist.getSelectedRow();
-        if (viewRow < 0) {
-            JOptionPane.showMessageDialog(this, "Select a section row first.");
-            return;
-        }
-        int modelRow = sectionMasterlist.convertRowIndexToModel(viewRow);
-        DefaultTableModel model = (DefaultTableModel) sectionMasterlist.getModel();
-        int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
-        
-        if (action == 1) {
-            String name = JOptionPane.showInputDialog(this, "Section Name:", model.getValueAt(modelRow, 1));
-            if (name == null) return;
-            String adviser = JOptionPane.showInputDialog(this, "Adviser:", model.getValueAt(modelRow, 2));
-            if (adviser == null) return;
-            String room = JOptionPane.showInputDialog(this, "Room:", model.getValueAt(modelRow, 3));
-            if (room == null) return;
-            if (!masterlistDAO.updateSection(id, name.trim(), adviser.trim(), room.trim())) {
-                JOptionPane.showMessageDialog(this, "Failed to update section.");
-            }
-            loadSections();
-        } else if (action == 2) {
-            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected section?", "Confirm", JOptionPane.YES_NO_OPTION);
+        };
+        reload.run();
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            int viewRow = table.getSelectedRow();
+            if (viewRow < 0) return;
+            int mr = table.convertRowIndexToModel(viewRow);
+            id.setText(String.valueOf(model.getValueAt(mr, 0)));
+            code.setText(String.valueOf(model.getValueAt(mr, 1)));
+            name.setText(String.valueOf(model.getValueAt(mr, 2)));
+            level.setText(String.valueOf(model.getValueAt(mr, 3)));
+        });
+
+        JButton add = new JButton("Add");
+        JButton update = new JButton("Update");
+        JButton delete = new JButton("Delete");
+        JButton refresh = new JButton("Refresh");
+        JButton clear = new JButton("Clear");
+
+        Runnable clearForm = () -> { id.setText(""); code.setText(""); name.setText(""); level.setText(""); table.clearSelection(); };
+
+        add.addActionListener(e -> {
+            String c = code.getText().trim();
+            String n = name.getText().trim();
+            String l = level.getText().trim();
+            if (c.isEmpty() || n.isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Fill course code and name."); return; }
+            boolean ok = masterlistDAO.addCourse(c, n, l);
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Add failed (code may already exist).");
+            reload.run(); clearForm.run(); loadCoursesFromDb();
+        });
+        update.addActionListener(e -> {
+            if (id.getText().trim().isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Select a course row."); return; }
+            int idVal;
+            try { idVal = Integer.parseInt(id.getText().trim()); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(crudDialog, "Invalid ID."); return; }
+            String c = code.getText().trim();
+            String n = name.getText().trim();
+            String l = level.getText().trim();
+            if (c.isEmpty() || n.isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Fill course code and name."); return; }
+            boolean ok = masterlistDAO.updateCourse(idVal, c, n, l);
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Update failed.");
+            reload.run(); loadCoursesFromDb();
+        });
+        delete.addActionListener(e -> {
+            if (id.getText().trim().isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Select a course row."); return; }
+            int confirm = JOptionPane.showConfirmDialog(crudDialog, "Delete selected course?", "Confirm", JOptionPane.YES_NO_OPTION);
             if (confirm != JOptionPane.YES_OPTION) return;
-            if (!masterlistDAO.deleteSection(id)) {
-                JOptionPane.showMessageDialog(this, "Failed to delete section.");
+            int idVal;
+            try { idVal = Integer.parseInt(id.getText().trim()); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(crudDialog, "Invalid ID."); return; }
+            boolean ok = masterlistDAO.deleteCourse(idVal);
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Delete failed.");
+            reload.run(); clearForm.run(); loadCoursesFromDb();
+        });
+        refresh.addActionListener(e -> reload.run());
+        clear.addActionListener(e -> clearForm.run());
+
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        int r = 0;
+        addFormRow(form, gbc, r++, "ID", id);
+        addFormRow(form, gbc, r++, "Course Code", code);
+        addFormRow(form, gbc, r++, "Course Name", name);
+        addFormRow(form, gbc, r++, "Level", level);
+
+        JPanel btns = new JPanel();
+        btns.add(add); btns.add(update); btns.add(delete); btns.add(refresh); btns.add(clear);
+
+        JPanel right = new JPanel(new BorderLayout(8, 8));
+        right.add(form, BorderLayout.CENTER);
+        right.add(btns, BorderLayout.SOUTH);
+
+        JPanel top = new JPanel(new BorderLayout(8, 8));
+        top.add(new JLabel("Search:"), BorderLayout.WEST);
+        top.add(search, BorderLayout.CENTER);
+
+        JPanel left = new JPanel(new BorderLayout(8, 8));
+        left.add(top, BorderLayout.NORTH);
+        left.add(scroll, BorderLayout.CENTER);
+
+        JPanel tab = new JPanel(new BorderLayout(10, 10));
+        tab.add(left, BorderLayout.CENTER);
+        tab.add(right, BorderLayout.EAST);
+        return tab;
+    }
+
+    private JPanel buildSectionsCrudTab() {
+        DefaultTableModel model = new DefaultTableModel(
+            new Object[][]{},
+            new String[]{"ID", "Section", "Adviser", "Room"}
+        ) { @Override public boolean isCellEditable(int r, int c) { return false; } };
+        javax.swing.JTable table = new javax.swing.JTable(model);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+        JScrollPane scroll = new JScrollPane(table);
+
+        JTextField search = new JTextField();
+        hookFilter(search, sorter);
+
+        JTextField id = new JTextField(); id.setEnabled(false);
+        JTextField section = new JTextField();
+        JTextField adviser = new JTextField();
+        JTextField room = new JTextField();
+
+        Runnable reload = () -> {
+            try {
+                List<java.util.Map<String, Object>> rows = masterlistDAO.getAllSections();
+                model.setRowCount(0);
+                for (java.util.Map<String, Object> r : rows) {
+                    model.addRow(new Object[]{r.get("id"), r.get("section_name"), r.get("adviser"), r.get("room")});
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(crudDialog, "Failed to load sections.");
             }
-            loadSections();
-        }
+        };
+        reload.run();
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            int viewRow = table.getSelectedRow();
+            if (viewRow < 0) return;
+            int mr = table.convertRowIndexToModel(viewRow);
+            id.setText(String.valueOf(model.getValueAt(mr, 0)));
+            section.setText(String.valueOf(model.getValueAt(mr, 1)));
+            adviser.setText(String.valueOf(model.getValueAt(mr, 2)));
+            room.setText(String.valueOf(model.getValueAt(mr, 3)));
+        });
+
+        JButton add = new JButton("Add");
+        JButton update = new JButton("Update");
+        JButton delete = new JButton("Delete");
+        JButton refresh = new JButton("Refresh");
+        JButton clear = new JButton("Clear");
+
+        Runnable clearForm = () -> { id.setText(""); section.setText(""); adviser.setText(""); room.setText(""); table.clearSelection(); };
+
+        add.addActionListener(e -> {
+            String s = section.getText().trim();
+            if (s.isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Fill section name."); return; }
+            boolean ok = masterlistDAO.addSection(s, adviser.getText().trim(), room.getText().trim());
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Add failed (section may already exist).");
+            reload.run(); clearForm.run(); loadSectionsFromDb();
+        });
+        update.addActionListener(e -> {
+            if (id.getText().trim().isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Select a section row."); return; }
+            int idVal;
+            try { idVal = Integer.parseInt(id.getText().trim()); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(crudDialog, "Invalid ID."); return; }
+            String s = section.getText().trim();
+            if (s.isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Fill section name."); return; }
+            boolean ok = masterlistDAO.updateSection(idVal, s, adviser.getText().trim(), room.getText().trim());
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Update failed.");
+            reload.run(); loadSectionsFromDb();
+        });
+        delete.addActionListener(e -> {
+            if (id.getText().trim().isEmpty()) { JOptionPane.showMessageDialog(crudDialog, "Select a section row."); return; }
+            int confirm = JOptionPane.showConfirmDialog(crudDialog, "Delete selected section?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            int idVal;
+            try { idVal = Integer.parseInt(id.getText().trim()); } catch (NumberFormatException ex) { JOptionPane.showMessageDialog(crudDialog, "Invalid ID."); return; }
+            boolean ok = masterlistDAO.deleteSection(idVal);
+            if (!ok) JOptionPane.showMessageDialog(crudDialog, "Delete failed.");
+            reload.run(); clearForm.run(); loadSectionsFromDb();
+        });
+        refresh.addActionListener(e -> reload.run());
+        clear.addActionListener(e -> clearForm.run());
+
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        int r = 0;
+        addFormRow(form, gbc, r++, "ID", id);
+        addFormRow(form, gbc, r++, "Section", section);
+        addFormRow(form, gbc, r++, "Adviser", adviser);
+        addFormRow(form, gbc, r++, "Room", room);
+
+        JPanel btns = new JPanel();
+        btns.add(add); btns.add(update); btns.add(delete); btns.add(refresh); btns.add(clear);
+
+        JPanel right = new JPanel(new BorderLayout(8, 8));
+        right.add(form, BorderLayout.CENTER);
+        right.add(btns, BorderLayout.SOUTH);
+
+        JPanel top = new JPanel(new BorderLayout(8, 8));
+        top.add(new JLabel("Search:"), BorderLayout.WEST);
+        top.add(search, BorderLayout.CENTER);
+
+        JPanel left = new JPanel(new BorderLayout(8, 8));
+        left.add(top, BorderLayout.NORTH);
+        left.add(scroll, BorderLayout.CENTER);
+
+        JPanel tab = new JPanel(new BorderLayout(10, 10));
+        tab.add(left, BorderLayout.CENTER);
+        tab.add(right, BorderLayout.EAST);
+        return tab;
+    }
+
+    private void hookFilter(JTextField field, TableRowSorter<DefaultTableModel> sorter) {
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { apply(); }
+            @Override public void removeUpdate(DocumentEvent e) { apply(); }
+            @Override public void changedUpdate(DocumentEvent e) { apply(); }
+            private void apply() {
+                String t = field.getText();
+                if (t == null || t.trim().isEmpty()) {
+                    sorter.setRowFilter(null);
+                } else {
+                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(t.trim())));
+                }
+            }
+        });
+    }
+
+    private void addFormRow(JPanel form, GridBagConstraints gbc, int row, String label, java.awt.Component field) {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0;
+        form.add(new JLabel(label), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        form.add(field, gbc);
     }
     
     private javax.swing.JTable getTableByChoice(int tableChoice) {
@@ -476,6 +771,158 @@ public class masterlist extends javax.swing.JPanel {
                 return sectionMasterlist;
             default:
                 return null;
+        }
+    }
+
+    private void handleSubjectCrud(int action) {
+        DefaultTableModel model = (DefaultTableModel) subjectMasterlist.getModel();
+        if (action == 0) {
+            String code = JOptionPane.showInputDialog(this, "Subject code:");
+            if (code == null) return;
+            String name = JOptionPane.showInputDialog(this, "Subject name:");
+            if (name == null) return;
+            String unitsStr = JOptionPane.showInputDialog(this, "Units (number):", "0");
+            if (unitsStr == null) return;
+            int units;
+            try {
+                units = Integer.parseInt(unitsStr.trim());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid units value.");
+                return;
+            }
+            masterlistDAO.addSubject(code.trim(), name.trim(), units);
+            loadSubjectsFromDb();
+        } else if (action == 1) {
+            int viewRow = subjectMasterlist.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Select a subject row first.");
+                return;
+            }
+            int modelRow = subjectMasterlist.convertRowIndexToModel(viewRow);
+            int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+            String curCode = String.valueOf(model.getValueAt(modelRow, 1));
+            String curName = String.valueOf(model.getValueAt(modelRow, 2));
+            String curUnits = String.valueOf(model.getValueAt(modelRow, 3));
+            
+            String code = JOptionPane.showInputDialog(this, "Subject code:", curCode);
+            if (code == null) return;
+            String name = JOptionPane.showInputDialog(this, "Subject name:", curName);
+            if (name == null) return;
+            String unitsStr = JOptionPane.showInputDialog(this, "Units (number):", curUnits);
+            if (unitsStr == null) return;
+            int units;
+            try {
+                units = Integer.parseInt(unitsStr.trim());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid units value.");
+                return;
+            }
+            masterlistDAO.updateSubject(id, code.trim(), name.trim(), units);
+            loadSubjectsFromDb();
+        } else if (action == 2) {
+            int viewRow = subjectMasterlist.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Select a subject row first.");
+                return;
+            }
+            int modelRow = subjectMasterlist.convertRowIndexToModel(viewRow);
+            int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected subject?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            masterlistDAO.deleteSubject(id);
+            loadSubjectsFromDb();
+        }
+    }
+    
+    private void handleCourseCrud(int action) {
+        DefaultTableModel model = (DefaultTableModel) courseMasterlist.getModel();
+        if (action == 0) {
+            String code = JOptionPane.showInputDialog(this, "Course code:");
+            if (code == null) return;
+            String name = JOptionPane.showInputDialog(this, "Course name:");
+            if (name == null) return;
+            String level = JOptionPane.showInputDialog(this, "Level (e.g. SHS, College):");
+            if (level == null) return;
+            masterlistDAO.addCourse(code.trim(), name.trim(), level.trim());
+            loadCoursesFromDb();
+        } else if (action == 1) {
+            int viewRow = courseMasterlist.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Select a course row first.");
+                return;
+            }
+            int modelRow = courseMasterlist.convertRowIndexToModel(viewRow);
+            int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+            String curCode = String.valueOf(model.getValueAt(modelRow, 1));
+            String curName = String.valueOf(model.getValueAt(modelRow, 2));
+            String curLevel = String.valueOf(model.getValueAt(modelRow, 3));
+            
+            String code = JOptionPane.showInputDialog(this, "Course code:", curCode);
+            if (code == null) return;
+            String name = JOptionPane.showInputDialog(this, "Course name:", curName);
+            if (name == null) return;
+            String level = JOptionPane.showInputDialog(this, "Level:", curLevel);
+            if (level == null) return;
+            masterlistDAO.updateCourse(id, code.trim(), name.trim(), level.trim());
+            loadCoursesFromDb();
+        } else if (action == 2) {
+            int viewRow = courseMasterlist.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Select a course row first.");
+                return;
+            }
+            int modelRow = courseMasterlist.convertRowIndexToModel(viewRow);
+            int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected course?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            masterlistDAO.deleteCourse(id);
+            loadCoursesFromDb();
+        }
+    }
+    
+    private void handleSectionCrud(int action) {
+        DefaultTableModel model = (DefaultTableModel) sectionMasterlist.getModel();
+        if (action == 0) {
+            String name = JOptionPane.showInputDialog(this, "Section name:");
+            if (name == null) return;
+            String adviser = JOptionPane.showInputDialog(this, "Adviser:");
+            if (adviser == null) adviser = "";
+            String room = JOptionPane.showInputDialog(this, "Room:");
+            if (room == null) room = "";
+            masterlistDAO.addSection(name.trim(), adviser.trim(), room.trim());
+            loadSectionsFromDb();
+        } else if (action == 1) {
+            int viewRow = sectionMasterlist.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Select a section row first.");
+                return;
+            }
+            int modelRow = sectionMasterlist.convertRowIndexToModel(viewRow);
+            int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+            String curName = String.valueOf(model.getValueAt(modelRow, 1));
+            String curAdviser = String.valueOf(model.getValueAt(modelRow, 2));
+            String curRoom = String.valueOf(model.getValueAt(modelRow, 3));
+            
+            String name = JOptionPane.showInputDialog(this, "Section name:", curName);
+            if (name == null) return;
+            String adviser = JOptionPane.showInputDialog(this, "Adviser:", curAdviser);
+            if (adviser == null) adviser = "";
+            String room = JOptionPane.showInputDialog(this, "Room:", curRoom);
+            if (room == null) room = "";
+            masterlistDAO.updateSection(id, name.trim(), adviser.trim(), room.trim());
+            loadSectionsFromDb();
+        } else if (action == 2) {
+            int viewRow = sectionMasterlist.getSelectedRow();
+            if (viewRow < 0) {
+                JOptionPane.showMessageDialog(this, "Select a section row first.");
+                return;
+            }
+            int modelRow = sectionMasterlist.convertRowIndexToModel(viewRow);
+            int id = Integer.parseInt(model.getValueAt(modelRow, 0).toString());
+            int confirm = JOptionPane.showConfirmDialog(this, "Delete selected section?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            masterlistDAO.deleteSection(id);
+            loadSectionsFromDb();
         }
     }
 

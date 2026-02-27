@@ -27,6 +27,12 @@ public class preschool extends javax.swing.JPanel {
         initializeFromCurrentUser();
         addEventHandlers();
     }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new main.login().setVisible(true);
+        });
+    }
     
     public void setStudentName(String fullName) {
         getPreschoolName.setText(fullName);

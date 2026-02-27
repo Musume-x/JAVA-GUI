@@ -27,6 +27,12 @@ public class preschoolPage extends javax.swing.JPanel {
         initializeUserName();
         addEventHandlers();
     }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new main.login().setVisible(true);
+        });
+    }
     
     private void ensureLoggedIn() {
         if (login.getCurrentUser() == null) {

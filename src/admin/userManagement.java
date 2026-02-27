@@ -8,14 +8,26 @@ package admin;
 import dao.UserDAO;
 import main.login;
 import model.User;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.RowFilter;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -29,6 +41,7 @@ public class userManagement extends javax.swing.JPanel {
     
     private final UserDAO userDAO = new UserDAO();
     private TableRowSorter<DefaultTableModel> sorter;
+    private JDialog crudDialog;
 
     /**
      * Creates new form userManagement
@@ -40,6 +53,12 @@ public class userManagement extends javax.swing.JPanel {
         loadUsers();
         addEventHandlers();
         setupSearch();
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new main.login().setVisible(true);
+        });
     }
     
     private void ensureLoggedIn() {
@@ -226,24 +245,247 @@ public class userManagement extends javax.swing.JPanel {
     }
     
     private void openCrudDialog() {
-        String[] actions = {"Add User", "Edit Selected", "Delete Selected"};
-        int action = JOptionPane.showOptionDialog(
-            this,
-            "Choose an action",
-            "User Management",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.PLAIN_MESSAGE,
-            null,
-            actions,
-            actions[0]
-        );
-        if (action == 0) {
-            crudAddUser();
-        } else if (action == 1) {
-            crudEditSelected();
-        } else if (action == 2) {
-            crudDeleteSelected();
+        openCrudWindow();
+    }
+
+    private void openCrudWindow() {
+        if (crudDialog != null && crudDialog.isShowing()) {
+            crudDialog.toFront();
+            return;
         }
+        if (login.getCurrentUser() == null) {
+            ensureLoggedIn();
+            return;
+        }
+
+        JFrame owner = (JFrame) SwingUtilities.getWindowAncestor(this);
+        crudDialog = new JDialog(owner, "User Management - CRUD", true);
+        crudDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        crudDialog.setSize(new Dimension(900, 520));
+        crudDialog.setLocationRelativeTo(owner);
+
+        // Table (fresh instance, so CRUD is self-contained)
+        DefaultTableModel tableModel = new DefaultTableModel(
+            new Object[][]{},
+            new String[]{"ID", "First Name", "Last Name", "Email", "Role", "Created At"}
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        javax.swing.JTable table = new javax.swing.JTable(tableModel);
+        TableRowSorter<DefaultTableModel> localSorter = new TableRowSorter<>(tableModel);
+        table.setRowSorter(localSorter);
+        JScrollPane tableScroll = new JScrollPane(table);
+
+        JTextField filterField = new JTextField();
+        filterField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { apply(); }
+            @Override public void removeUpdate(DocumentEvent e) { apply(); }
+            @Override public void changedUpdate(DocumentEvent e) { apply(); }
+            private void apply() {
+                String t = filterField.getText();
+                if (t == null || t.trim().isEmpty()) {
+                    localSorter.setRowFilter(null);
+                } else {
+                    localSorter.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(t.trim())));
+                }
+            }
+        });
+
+        // Form fields
+        JTextField idField = new JTextField();
+        idField.setEnabled(false);
+        JTextField firstField = new JTextField();
+        JTextField lastField = new JTextField();
+        JTextField emailField = new JTextField();
+        JTextField roleField = new JTextField();
+        JPasswordField passField = new JPasswordField();
+
+        JButton addBtn = new JButton("Add");
+        JButton updateBtn = new JButton("Update");
+        JButton deleteBtn = new JButton("Delete");
+        JButton refreshBtn = new JButton("Refresh");
+        JButton clearBtn = new JButton("Clear");
+        JButton closeBtn = new JButton("Close");
+
+        Runnable clear = () -> {
+            idField.setText("");
+            firstField.setText("");
+            lastField.setText("");
+            emailField.setText("");
+            roleField.setText("");
+            passField.setText("");
+            table.clearSelection();
+        };
+
+        Runnable load = () -> {
+            try {
+                List<java.util.Map<String, Object>> users = userDAO.getAllUsers();
+                tableModel.setRowCount(0);
+                for (java.util.Map<String, Object> u : users) {
+                    tableModel.addRow(new Object[]{
+                        u.get("id"),
+                        u.get("first_name"),
+                        u.get("last_name"),
+                        u.get("email"),
+                        u.get("role"),
+                        u.get("created_at")
+                    });
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(crudDialog, "Failed to load users.");
+            }
+        };
+        load.run();
+
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            int viewRow = table.getSelectedRow();
+            if (viewRow < 0) return;
+            int modelRow = table.convertRowIndexToModel(viewRow);
+            idField.setText(String.valueOf(tableModel.getValueAt(modelRow, 0)));
+            firstField.setText(String.valueOf(tableModel.getValueAt(modelRow, 1)));
+            lastField.setText(String.valueOf(tableModel.getValueAt(modelRow, 2)));
+            emailField.setText(String.valueOf(tableModel.getValueAt(modelRow, 3)));
+            roleField.setText(String.valueOf(tableModel.getValueAt(modelRow, 4)));
+            passField.setText("");
+        });
+
+        addBtn.addActionListener(ev -> {
+            String first = firstField.getText().trim();
+            String last = lastField.getText().trim();
+            String email = emailField.getText().trim();
+            String role = roleField.getText().trim();
+            String pass = new String(passField.getPassword());
+            if (first.isEmpty() || last.isEmpty() || email.isEmpty() || role.isEmpty() || pass.isEmpty()) {
+                JOptionPane.showMessageDialog(crudDialog, "Fill First/Last/Email/Role/Password.");
+                return;
+            }
+            User user = new User();
+            user.setFirstName(first);
+            user.setLastName(last);
+            user.setEmail(email);
+            user.setRole(role);
+            user.setPassword(pass);
+            boolean ok = userDAO.registerUser(user);
+            if (!ok) {
+                JOptionPane.showMessageDialog(crudDialog, "Add failed (email may already exist).");
+                return;
+            }
+            load.run();
+            clear.run();
+        });
+
+        updateBtn.addActionListener(ev -> {
+            if (idField.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(crudDialog, "Select a user row to update.");
+                return;
+            }
+            int id;
+            try {
+                id = Integer.parseInt(idField.getText().trim());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(crudDialog, "Invalid ID.");
+                return;
+            }
+            User existing = userDAO.getUserById(id);
+            if (existing == null) {
+                JOptionPane.showMessageDialog(crudDialog, "User not found.");
+                return;
+            }
+            existing.setFirstName(firstField.getText().trim());
+            existing.setLastName(lastField.getText().trim());
+            existing.setEmail(emailField.getText().trim());
+            existing.setRole(roleField.getText().trim());
+            boolean ok = userDAO.updateUserAdmin(existing);
+            if (!ok) {
+                JOptionPane.showMessageDialog(crudDialog, "Update failed.");
+                return;
+            }
+            load.run();
+        });
+
+        deleteBtn.addActionListener(ev -> {
+            if (idField.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(crudDialog, "Select a user row to delete.");
+                return;
+            }
+            int confirm = JOptionPane.showConfirmDialog(crudDialog, "Delete selected user?", "Confirm", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            int id;
+            try {
+                id = Integer.parseInt(idField.getText().trim());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(crudDialog, "Invalid ID.");
+                return;
+            }
+            boolean ok = userDAO.deleteUserById(id);
+            if (!ok) {
+                JOptionPane.showMessageDialog(crudDialog, "Delete failed.");
+                return;
+            }
+            load.run();
+            clear.run();
+        });
+
+        refreshBtn.addActionListener(ev -> load.run());
+        clearBtn.addActionListener(ev -> clear.run());
+        closeBtn.addActionListener(ev -> crudDialog.dispose());
+
+        JPanel top = new JPanel(new BorderLayout(8, 8));
+        top.add(new JLabel("Search:"), BorderLayout.WEST);
+        top.add(filterField, BorderLayout.CENTER);
+
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 6, 4, 6);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+
+        int r = 0;
+        addFormRow(form, gbc, r++, "ID", idField);
+        addFormRow(form, gbc, r++, "First Name", firstField);
+        addFormRow(form, gbc, r++, "Last Name", lastField);
+        addFormRow(form, gbc, r++, "Email", emailField);
+        addFormRow(form, gbc, r++, "Role", roleField);
+        addFormRow(form, gbc, r++, "Password (for Add)", passField);
+
+        JPanel buttons = new JPanel();
+        buttons.add(addBtn);
+        buttons.add(updateBtn);
+        buttons.add(deleteBtn);
+        buttons.add(refreshBtn);
+        buttons.add(clearBtn);
+        buttons.add(closeBtn);
+
+        JPanel right = new JPanel(new BorderLayout(8, 8));
+        right.add(form, BorderLayout.CENTER);
+        right.add(buttons, BorderLayout.SOUTH);
+
+        JPanel center = new JPanel(new BorderLayout(8, 8));
+        center.add(top, BorderLayout.NORTH);
+        center.add(tableScroll, BorderLayout.CENTER);
+
+        JPanel root = new JPanel(new BorderLayout(10, 10));
+        root.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        root.add(center, BorderLayout.CENTER);
+        root.add(right, BorderLayout.EAST);
+
+        crudDialog.setContentPane(root);
+        crudDialog.setVisible(true);
+    }
+
+    private void addFormRow(JPanel form, GridBagConstraints gbc, int row, String label, java.awt.Component field) {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0;
+        form.add(new JLabel(label), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        form.add(field, gbc);
     }
     
     private void crudAddUser() {

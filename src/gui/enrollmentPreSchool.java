@@ -5,13 +5,12 @@
  */
 package gui;
 
-import dao.EnrollmentDAO;
 import main.login;
 import model.User;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import dao.EnrollmentDAO;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
@@ -29,6 +28,12 @@ public class enrollmentPreSchool extends javax.swing.JPanel {
         initComponents();
         ensureLoggedIn();
         addEventHandlers();
+    }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new main.login().setVisible(true);
+        });
     }
 
     public void prefillFromUser(User user) {
@@ -253,22 +258,21 @@ public class enrollmentPreSchool extends javax.swing.JPanel {
         String contactValue = contact.getText().trim();
         String kinderLevel = kinder1.isSelected() ? "Kinder 1" : "Kinder 2";
         
-        User user = login.getCurrentUser();
-        if (user == null) {
+        User currentUser = login.getCurrentUser();
+        if (currentUser == null) {
             ensureLoggedIn();
             return;
         }
         
         boolean ok = enrollmentDAO.submitPreschoolEnrollment(
-            user.getId(),
+            currentUser.getId(),
             fullNameValue,
             birthdateValue,
             contactValue,
             kinderLevel
         );
-        
         if (!ok) {
-            JOptionPane.showMessageDialog(this, "Failed to submit enrollment. Please try again.");
+            javax.swing.JOptionPane.showMessageDialog(this, "Failed to submit enrollment. Please try again.");
             return;
         }
 

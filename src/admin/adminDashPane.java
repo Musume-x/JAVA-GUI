@@ -40,6 +40,12 @@ public class adminDashPane extends javax.swing.JPanel {
         });
         addEventHandlers();
     }
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new main.login().setVisible(true);
+        });
+    }
     
     private void ensureLoggedIn() {
         if (login.getCurrentUser() == null) {
