@@ -131,6 +131,35 @@ public class config {
                     "FOREIGN KEY (user_id) REFERENCES users(id)" +
                     ")";
             stmt.execute(createPreschoolEnrollments);
+
+            // Generic enrollment details for all programs
+            String createEnrollmentDetails = "CREATE TABLE IF NOT EXISTS enrollment_details (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "user_id INTEGER NOT NULL," +
+                    "program TEXT NOT NULL," +
+                    "full_name TEXT," +
+                    "birthdate TEXT," +
+                    "contact_no TEXT," +
+                    "track_level TEXT," +
+                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP," +
+                    "UNIQUE(user_id, program)," +
+                    "FOREIGN KEY (user_id) REFERENCES users(id)" +
+                    ")";
+            stmt.execute(createEnrollmentDetails);
+
+            String createPaymentTx = "CREATE TABLE IF NOT EXISTS payment_transactions (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "receipt_no TEXT NOT NULL UNIQUE," +
+                    "user_id INTEGER NOT NULL," +
+                    "amount REAL NOT NULL," +
+                    "purpose TEXT," +
+                    "payment_method TEXT," +
+                    "notes TEXT," +
+                    "recorded_by_user_id INTEGER," +
+                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP," +
+                    "FOREIGN KEY (user_id) REFERENCES users(id)" +
+                    ")";
+            stmt.execute(createPaymentTx);
             
         } catch (SQLException e) {
             System.err.println("Error initializing database: " + e.getMessage());

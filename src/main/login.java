@@ -7,8 +7,6 @@ package main;
 
 import dao.UserDAO;
 import model.User;
-import gui.landingPage;
-import admin.adminDashPane;
 import javax.swing.JOptionPane;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -101,29 +99,12 @@ public class login extends javax.swing.JFrame {
     }
     
     private void openAdminDashboard() {
-        adminDashPane adminPanel = new adminDashPane();
-        
-        JFrame frame = new JFrame("Admin Dashboard");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(adminPanel);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        AppNavigator.showAdminDashboard(AppNavigator::showLogin);
         this.dispose();
     }
     
     private void openLandingPage() {
-        landingPage landing = new landingPage();
-        landing.setUserName(currentUser.getFullName());
-        
-        JFrame frame = new JFrame("Landing Page");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(landing);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        AppNavigator.showLanding(AppNavigator::showLogin);
         this.dispose();
     }
     

@@ -5,6 +5,7 @@
  */
 package gui;
 
+import main.AppNavigator;
 import main.login;
 import model.User;
 import dao.UserDAO;
@@ -48,6 +49,8 @@ public class userForm extends javax.swing.JPanel {
             updateEmail.setText(currentUser.getEmail() != null ? currentUser.getEmail() : "");
             updateStatus.setText(currentUser.getStatus() != null ? currentUser.getStatus() : "");
             updateAccountID.setText(currentUser.getAccountID() != null ? currentUser.getAccountID() : "");
+            updateAccountID.setEditable(false);
+            updateAccountID.setFocusable(false);
             updateSchoolLevel.setText(currentUser.getSchoolLevel() != null ? currentUser.getSchoolLevel() : "");
             updateAddress.setText(currentUser.getAddress() != null ? currentUser.getAddress() : "");
             updateBirthdate.setText(currentUser.getBirthdate() != null ? currentUser.getBirthdate() : "");
@@ -126,18 +129,7 @@ public class userForm extends javax.swing.JPanel {
     }
 
     private void openLandingPage() {
-        landingPage landing = new landingPage();
-        landing.setUserName(currentUser != null ? currentUser.getFullName() : "");
-
-        JFrame frame = new JFrame("Landing Page");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(landing);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        // Close current window
+        AppNavigator.showLanding(AppNavigator::showLogin);
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();
@@ -167,17 +159,7 @@ public class userForm extends javax.swing.JPanel {
     }
 
     private void openUserProfile() {
-        userProfile profilePanel = new userProfile();
-
-        JFrame frame = new JFrame("User Profile");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(profilePanel);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        // Close current window
+        AppNavigator.showUserProfile(() -> AppNavigator.showUserForm(() -> AppNavigator.showLanding(AppNavigator::showLogin)));
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();
@@ -209,7 +191,7 @@ public class userForm extends javax.swing.JPanel {
         currentUser.setContact(updateContact.getText().trim());
         currentUser.setEmail(updateEmail.getText().trim());
         currentUser.setStatus(updateStatus.getText().trim());
-        currentUser.setAccountID(updateAccountID.getText().trim());
+        // account_id is fixed; keep existing value from currentUser (field is not editable)
         currentUser.setSchoolLevel(updateSchoolLevel.getText().trim());
         currentUser.setAddress(updateAddress.getText().trim());
         currentUser.setBirthdate(updateBirthdate.getText().trim());

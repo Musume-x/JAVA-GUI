@@ -5,6 +5,7 @@
  */
 package gui;
 
+import main.AppNavigator;
 import main.login;
 import model.User;
 import dao.UserDAO;
@@ -103,18 +104,7 @@ public class userProfile extends javax.swing.JPanel {
     }
 
     private void openLandingPage() {
-        landingPage landing = new landingPage();
-        landing.setUserName(currentUser != null ? currentUser.getFullName() : "");
-
-        JFrame frame = new JFrame("Landing Page");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(landing);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        // Close current window
+        AppNavigator.showLanding(AppNavigator::showLogin);
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();
@@ -144,22 +134,11 @@ public class userProfile extends javax.swing.JPanel {
     }
 
     private void openUserForm() {
-        userForm form = new userForm();
-
-        JFrame frame = new JFrame("Edit Profile");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(form);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-        // Close current window
+        AppNavigator.showUserForm(() -> AppNavigator.showUserProfile(() -> AppNavigator.showLanding(AppNavigator::showLogin)));
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();
         }
-
     }
 
     /**

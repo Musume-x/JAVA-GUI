@@ -6,6 +6,8 @@
 package admin;
 
 import dao.UserDAO;
+import main.AppNavigator;
+import main.WindowFrames;
 import main.login;
 import model.User;
 import java.awt.BorderLayout;
@@ -193,17 +195,11 @@ public class userManagement extends javax.swing.JPanel {
     }
     
     private void openDashboard() {
-        adminDashPane pane = new adminDashPane();
-        JFrame frame = new JFrame("Admin Dashboard");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(pane);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        
+        AppNavigator.showAdminDashboard(() -> AppNavigator.showUserManagement());
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-        if (currentFrame != null) currentFrame.dispose();
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
     }
     
     private void openDashboardAndShowEnrollments() {
@@ -234,14 +230,16 @@ public class userManagement extends javax.swing.JPanel {
     private void openPanelInFrame(javax.swing.JPanel panel, String title) {
         JFrame frame = new JFrame(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(panel);
+        WindowFrames.setContentWithBack(frame, panel, AppNavigator::showUserManagement);
         frame.pack();
         frame.setSize(1020, 560);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-        
+
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-        if (currentFrame != null) currentFrame.dispose();
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
     }
     
     private void openCrudDialog() {

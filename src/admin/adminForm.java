@@ -1,6 +1,7 @@
 package admin;
 
 import dao.UserDAO;
+import main.AppNavigator;
 import main.login;
 import model.User;
 import java.awt.event.MouseAdapter;
@@ -35,6 +36,8 @@ public class adminForm extends javax.swing.JPanel {
             updateEmailadmin.setText(currentUser.getEmail() != null ? currentUser.getEmail() : "");
             updateStatusadmin.setText(currentUser.getStatus() != null ? currentUser.getStatus() : "");
             updateAccountIDadmin.setText(currentUser.getAccountID() != null ? currentUser.getAccountID() : "");
+            updateAccountIDadmin.setEditable(false);
+            updateAccountIDadmin.setFocusable(false);
             updateAddressadmin.setText(currentUser.getAddress() != null ? currentUser.getAddress() : "");
             updateBirthdateadmin.setText(currentUser.getBirthdate() != null ? currentUser.getBirthdate() : "");
             getFullNameadmin.setText(currentUser.getFirstName() + " " + (currentUser.getLastName() != null ? currentUser.getLastName() : ""));
@@ -119,14 +122,7 @@ public class adminForm extends javax.swing.JPanel {
     }
 
     private void openAdminDashboard() {
-        adminDashPane adminPanel = new adminDashPane();
-        JFrame frame = new JFrame("Admin Dashboard");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(adminPanel);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        AppNavigator.showAdminDashboard(() -> AppNavigator.showAdminForm(() -> AppNavigator.showAdminProfile(AppNavigator::showLogin)));
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();
@@ -174,7 +170,7 @@ public class adminForm extends javax.swing.JPanel {
         currentUser.setEmail(updateEmailadmin.getText().trim());
         currentUser.setStatus(updateStatusadmin.getText().trim());
         currentUser.setGender(updateGenderOptionMaleadmin.isSelected() ? "Male" : (updateGenderOptionFemaleadmin.isSelected() ? "Female" : ""));
-        currentUser.setAccountID(updateAccountIDadmin.getText().trim());
+        // account_id is fixed; keep existing value from currentUser (field is not editable)
         currentUser.setAddress(updateAddressadmin.getText().trim());
         currentUser.setBirthdate(updateBirthdateadmin.getText().trim());
         // Update in database
@@ -189,14 +185,7 @@ public class adminForm extends javax.swing.JPanel {
     }
 
     private void openAdminProfile() {
-        adminProfile p = new adminProfile();
-        JFrame frame = new JFrame("Admin Profile");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(p);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        AppNavigator.showAdminProfile(AppNavigator::showLogin);
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();

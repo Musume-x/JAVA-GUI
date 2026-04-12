@@ -5,6 +5,7 @@
  */
 package gui;
 
+import main.AppNavigator;
 import main.login;
 import model.User;
 import java.awt.event.MouseAdapter;
@@ -76,20 +77,7 @@ public class preschoolPage extends javax.swing.JPanel {
             return;
         }
         
-        enrollmentPreSchool enrollmentPanel = new enrollmentPreSchool();
-        User user = login.getCurrentUser();
-        if (user != null) {
-            enrollmentPanel.prefillFromUser(user);
-        }
-        
-        JFrame frame = new JFrame("Pre-School Enrollment");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(enrollmentPanel);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-        
+        AppNavigator.showEnrollmentPreSchool(() -> AppNavigator.showPreschoolPage(() -> AppNavigator.showLanding(AppNavigator::showLogin)));
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();

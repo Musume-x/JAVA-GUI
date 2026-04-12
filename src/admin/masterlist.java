@@ -5,8 +5,10 @@
  */
 package admin;
 
-import dao.UserDAO;
+import dao.EnrollmentDAO;
 import dao.MasterlistDAO;
+import main.AppNavigator;
+import main.WindowFrames;
 import main.login;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -40,7 +42,7 @@ import java.util.List;
  */
 public class masterlist extends javax.swing.JPanel {
     
-    private final UserDAO userDAO = new UserDAO();
+    private final EnrollmentDAO enrollmentDAO = new EnrollmentDAO();
     private final MasterlistDAO masterlistDAO = new MasterlistDAO();
     private TableRowSorter<DefaultTableModel> studentSorter;
     private TableRowSorter<DefaultTableModel> courseSorter;
@@ -55,7 +57,7 @@ public class masterlist extends javax.swing.JPanel {
         initComponents();
         ensureLoggedIn();
         initTableModels();
-        loadStudentsOnly();
+        loadEnrolleesMasterlist();
         loadSubjectsFromDb();
         loadCoursesFromDb();
         loadSectionsFromDb();
@@ -83,7 +85,7 @@ public class masterlist extends javax.swing.JPanel {
     private void initTableModels() {
         DefaultTableModel students = new DefaultTableModel(
             new Object[][]{},
-            new String[]{"ID", "First Name", "Last Name", "Email", "Role", "Created At"}
+            new String[]{"App ID", "User ID", "Full Name", "Program", "Level", "Status", "Submitted"}
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -119,29 +121,24 @@ public class masterlist extends javax.swing.JPanel {
         sectionMasterlist.setRowSorter(sectionSorter);
     }
     
-    private void loadStudentsOnly() {
+    private void loadEnrolleesMasterlist() {
         try {
-            List<java.util.Map<String, Object>> users = userDAO.getAllUsers();
+            List<java.util.Map<String, Object>> rows = enrollmentDAO.getPendingAndConfirmedEnrollments();
             DefaultTableModel model = (DefaultTableModel) studentMasterlist.getModel();
             model.setRowCount(0);
-            
-            for (java.util.Map<String, Object> u : users) {
-                Object roleObj = u.get("role");
-                String role = roleObj != null ? roleObj.toString() : "";
-                if (!"student".equalsIgnoreCase(role)) {
-                    continue;
-                }
+            for (java.util.Map<String, Object> r : rows) {
                 model.addRow(new Object[]{
-                    u.get("id"),
-                    u.get("first_name"),
-                    u.get("last_name"),
-                    u.get("email"),
-                    u.get("role"),
-                    u.get("created_at")
+                    r.get("id"),
+                    r.get("user_id"),
+                    r.get("full_name"),
+                    r.get("program"),
+                    r.get("level"),
+                    r.get("status"),
+                    r.get("created_at")
                 });
             }
         } catch (Exception e) {
-            System.err.println("Error loading students in masterlist: " + e.getMessage());
+            System.err.println("Error loading enrollees in masterlist: " + e.getMessage());
         }
     }
     
@@ -281,6 +278,83 @@ public class masterlist extends javax.swing.JPanel {
                 openCrudDialog();
             }
         });
+
+        studentMasterlist.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    handleStudentEnrollmentReview();
+                }
+            }
+        });
+    }
+
+    /**
+     * Double-click a pending row on the Enrollees masterlist to approve or reject.
+     */
+    private void handleStudentEnrollmentReview() {
+        if (!(studentMasterlist.getModel() instanceof DefaultTableModel)) {
+            return;
+        }
+        DefaultTableModel m = (DefaultTableModel) studentMasterlist.getModel();
+        if (m.getColumnCount() != 7 || !"App ID".equals(m.getColumnName(0)) || !"Status".equals(m.getColumnName(5))) {
+            return;
+        }
+        int viewRow = studentMasterlist.getSelectedRow();
+        if (viewRow < 0) {
+            JOptionPane.showMessageDialog(this, "Select an enrollee row first.");
+            return;
+        }
+        int row = studentMasterlist.convertRowIndexToModel(viewRow);
+        Object idObj = m.getValueAt(row, 0);
+        if (idObj == null) {
+            return;
+        }
+        int applicationId = idObj instanceof Number ? ((Number) idObj).intValue() : Integer.parseInt(idObj.toString());
+        String fullName = m.getValueAt(row, 2) != null ? m.getValueAt(row, 2).toString() : "";
+        String program = m.getValueAt(row, 3) != null ? m.getValueAt(row, 3).toString() : "";
+        String level = m.getValueAt(row, 4) != null ? m.getValueAt(row, 4).toString() : "";
+        Object statusObj = m.getValueAt(row, 5);
+        String status = statusObj != null ? statusObj.toString().trim() : "";
+
+        if (!"pending".equalsIgnoreCase(status)) {
+            JOptionPane.showMessageDialog(this,
+                    "Only pending applications can be approved or rejected here.\nCurrent status: " + status);
+            return;
+        }
+
+        String summary = "Application #" + applicationId + "\n"
+                + (fullName.isEmpty() ? "" : "Name: " + fullName + "\n")
+                + "Program: " + program + "\n"
+                + "Level: " + level;
+        Object[] options = {"Approve", "Reject", "Cancel"};
+        int choice = JOptionPane.showOptionDialog(
+                this,
+                summary,
+                "Review enrollment",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        if (choice == 0) {
+            if (enrollmentDAO.updateApplicationStatus(applicationId, "confirmed")) {
+                JOptionPane.showMessageDialog(this, "Application approved.");
+                loadEnrolleesMasterlist();
+            } else {
+                JOptionPane.showMessageDialog(this, "Could not update application.");
+            }
+        } else if (choice == 1) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Reject application #" + applicationId + "?",
+                    "Confirm reject",
+                    JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION && enrollmentDAO.updateApplicationStatus(applicationId, "rejected")) {
+                JOptionPane.showMessageDialog(this, "Application rejected.");
+                loadEnrolleesMasterlist();
+            }
+        }
     }
     
     private void openDashboard() {
@@ -316,14 +390,16 @@ public class masterlist extends javax.swing.JPanel {
     private void openPanelInFrame(javax.swing.JPanel panel, String title) {
         JFrame frame = new JFrame(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(panel);
+        WindowFrames.setContentWithBack(frame, panel, AppNavigator::showMasterlist);
         frame.pack();
         frame.setSize(1020, 560);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-        
+
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-        if (currentFrame != null) currentFrame.dispose();
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
     }
     
     private void openCrudDialog() {

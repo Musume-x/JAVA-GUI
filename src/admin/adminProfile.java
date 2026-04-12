@@ -1,5 +1,6 @@
 package admin;
 
+import main.AppNavigator;
 import main.login;
 import model.User;
 import dao.UserDAO;
@@ -90,14 +91,7 @@ public class adminProfile extends javax.swing.JPanel {
     }
 
     private void openAdminDashboard() {
-        adminDashPane adminPanel = new adminDashPane();
-        JFrame frame = new JFrame("Admin Dashboard");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(adminPanel);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        AppNavigator.showAdminDashboard(() -> AppNavigator.showAdminProfile(AppNavigator::showLogin));
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();
@@ -118,14 +112,7 @@ public class adminProfile extends javax.swing.JPanel {
     }
 
     private void openAdminForm() {
-        adminForm form = new adminForm();
-        JFrame frame = new JFrame("Edit Admin Profile");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(form);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        AppNavigator.showAdminForm(() -> AppNavigator.showAdminProfile(AppNavigator::showLogin));
         JFrame currentFrame = (JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();

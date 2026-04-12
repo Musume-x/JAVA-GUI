@@ -5,6 +5,7 @@
  */
 package gui;
 
+import main.AppNavigator;
 import main.login;
 import model.User;
 import java.awt.event.MouseAdapter;
@@ -276,19 +277,10 @@ public class enrollmentPreSchool extends javax.swing.JPanel {
             return;
         }
 
-        preschool preschoolPanel = new preschool();
-        if (!fullNameValue.isEmpty()) {
-            preschoolPanel.setStudentName(fullNameValue);
-        }
+        javax.swing.JOptionPane.showMessageDialog(this,
+                "Your application was submitted as pending.\nAn administrator must approve it before you are fully enrolled.");
 
-        JFrame frame = new JFrame("Pre-School");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(preschoolPanel);
-        frame.pack();
-        frame.setSize(1020, 560);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
+        AppNavigator.showPreschoolPanel(() -> AppNavigator.showLanding(AppNavigator::showLogin), fullNameValue);
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         if (currentFrame != null) {
             currentFrame.dispose();
